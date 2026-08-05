@@ -94,28 +94,30 @@ function parseBody(req) {
 }
 
 // Helper function to check if user has buyer role
-async function hasBuyerRole(userId) {
-    const botToken = process.env.BOT_TOKEN;
-    if (!botToken) {
-        console.error('BOT_TOKEN environment variable not set');
-        return false;
-    }
-
+async function hasBuyerRole(userToken, userId) {
+    console.log(`Fetching member ${userId} from guild ${GUILD_ID}`);
     try {
         const response = await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bot ${botToken}`,
+                'Authorization': userToken,
                 'Content-Type': 'application/json'
             }
         });
 
+        console.log('Guild member response status:', response.status);
+
         if (!response.ok) {
-            console.error('Failed to fetch guild member:', response.status);
+            const errorText = await response.text();
+            console.error('Failed to fetch guild member:', response.status, errorText);
             return false;
         }
 
         const member = await response.json();
+        console.log('Member data:', member);
+        console.log('Member roles:', member.roles);
+        console.log('Buyer role ID:', BUYER_ROLE_ID);
+        console.log('Has buyer role:', member.roles && member.roles.includes(BUYER_ROLE_ID));
         return member.roles && member.roles.includes(BUYER_ROLE_ID);
     } catch (error) {
         console.error('Error checking buyer role:', error);
@@ -185,7 +187,9 @@ const server = http.createServer(async (req, res) => {
             console.log('Login successful for user:', userData.username);
 
             // Check if user has buyer role
-            const hasRole = await hasBuyerRole(userData.id);
+            console.log('Checking buyer role for user:', userData.id);
+            const hasRole = await hasBuyerRole(token, userData.id);
+            console.log('Buyer role check result:', hasRole);
             if (!hasRole) {
                 console.error('User does not have buyer role');
                 sendJson(res, { error: 'You need the buyer role to access this dashboard' }, 403);

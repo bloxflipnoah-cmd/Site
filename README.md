@@ -27,7 +27,6 @@ A Discord.js bot to manage and complete quests automatically. Now includes a web
 |---|---|---|
 | `DISCORD_TOKEN` | Yes | Your bot's token from the Developer Portal |
 | `DISCORD_CLIENT_ID` | Yes | Your application's client ID |
-| `BOT_TOKEN` | Yes | Bot token for role verification (web dashboard) |
 | `BOT_PREFIX` | No | Prefix for text commands (default: `,,`) |
 
 Create a `.env` file in the root directory:
@@ -35,7 +34,6 @@ Create a `.env` file in the root directory:
 ```env
 DISCORD_TOKEN=your_bot_token_here
 DISCORD_CLIENT_ID=your_application_id_here
-BOT_TOKEN=your_bot_token_here
 BOT_PREFIX=,,
 ```
 
