@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+    <div class="login-wrapper">
+        <div class="login-box">
+
+            <p class="login-sub">Connecte-toi avec ton token Discord</p>
+            <form id="loginForm">
+                <input type="password" id="tokenInput" placeholder="Colle ton token ici..." required>
+                <button type="submit">🔗 Se connecter</button>
+                <div id="loginError" class="login-error"></div>
+            </form>
+            <div class="login-help">
+                <details>
+                    <summary>Token ?</summary>
+                    <ol>
+                        <li>Discord navigateur</li>
+                        <li>F12 → Console</li>
+                        <li><code>localStorage.token</code></li>
+                        <li>Copie</li>
+                    </ol>
+                </details>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('tokenInput').value.trim();
+            const btn = e.target.querySelector('button');
+            const err = document.getElementById('loginError');
+            btn.disabled = true;
+            btn.textContent = '⏳ Connexion...';
+            err.textContent = '';
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    err.textContent = data.error || 'Token invalide';
+                    btn.disabled = false;
+                    btn.textContent = '🔗 Se connecter';
+                }
+            } catch {
+                err.textContent = '❌ Erreur réseau';
+                btn.disabled = false;
+                btn.textContent = '🔗 Se connecter';
+            }
+        });
+    </script>
+</body>
+</html>

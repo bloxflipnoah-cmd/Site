@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img id="sidebarAvatar" src="" alt="Avatar" class="sidebar-avatar">
+                <div class="sidebar-user">
+                    <div id="sidebarUsername" class="sidebar-username">Username</div>
+                    <div id="sidebarTag" class="sidebar-tag">#0000</div>
+                </div>
+            </div>
+            <button id="logoutBtn" class="btn-logout">Déconnexion</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="greeting">Bienvenue !</h1>
+                <div class="header-stats">
+                    <div class="header-stat">
+                        <span class="stat-label">Restantes</span>
+                        <span id="questCount" class="stat-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>Fait</h3>
+                        <p id="completedQuests">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>À faire</h3>
+                        <p id="remainingQuests">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <h3>Progression</h3>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-section">
+                <button id="completeAllBtn" class="btn btn-primary btn-large">
+                    Tout faire
+                </button>
+            </div>
+
+            <!-- Quests List -->
+            <div class="quests-section">
+                <div id="questsList" class="quests-list">
+                    <div class="loading-spinner">Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = '';
+
+        async function loadUser() {
+            try {
+                const res = await fetch('/api/user');
+                if (!res.ok) throw new Error('Non autorisé');
+                const user = await res.json();
+                const avatarImg = document.getElementById('sidebarAvatar');
+                if (user.avatar) {
+                    avatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                    avatarImg.onerror = function() {
+                        this.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    };
+                } else {
+                    avatarImg.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+                }
+                document.getElementById('sidebarUsername').textContent = user.username;
+                document.getElementById('sidebarTag').textContent = `#${user.discriminator}`;
+                document.getElementById('greeting').textContent = `Bienvenue, ${user.global_name || user.username} !`;
+            } catch {
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadQuests() {
+            try {
+                const res = await fetch('/api/quests');
+                const data = await res.json();
+                const total = data.total || 0;
+                const completed = data.completed || 0;
+                const remaining = data.uncompleted?.length || 0;
+                document.getElementById('completedQuests').textContent = completed;
+                document.getElementById('remainingQuests').textContent = remaining;
+                document.getElementById('questCount').textContent = remaining;
+
+                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                document.getElementById('progressPercent').textContent = `${pct}%`;
+                document.getElementById('progressFill').style.width = `${pct}%`;
+
+                const list = document.getElementById('questsList');
+                if (!data.uncompleted || data.uncompleted.length === 0) {
+                    list.innerHTML = `<div class="loading-spinner">Tout est terminé !</div>`;
+                    return;
+                }
+
+                list.innerHTML = data.uncompleted.map(q => {
+                    const tasks = q.config.task_config?.tasks || q.config.task_config_v2?.tasks || {};
+                    const expiresAt = new Date(q.config.expires_at);
+                    const timeLeft = getTimeRemaining(expiresAt);
+                    
+                    return `
+                        <div class="quest-card" data-id="${q.id}">
+                            <div class="quest-left">
+                                <div>
+                                    <div class="quest-title">${q.config.messages.quest_name}</div>
+                                    <div class="quest-sub">${q.config.messages.game_title}</div>
+                                </div>
+                                <span class="quest-expiry">${timeLeft}</span>
+                            </div>
+                            <button class="btn-quest" onclick="completeQuest('${q.id}')">Faire</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+                document.getElementById('questsList').innerHTML = `<div class="loading-spinner">Erreur de chargement</div>`;
+            }
+        }
+
+        function getTimeRemaining(expiresAt) {
+            const now = new Date();
+            const diff = expiresAt - now;
+
+            if (diff <= 0) return 'Expirée';
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            if (days > 0) return `${days}j ${hours}h`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        async function completeQuest(id) {
+            const card = document.querySelector(`.quest-card[data-id="${id}"]`);
+            const btn = card?.querySelector('.btn-quest');
+            if (!btn) return;
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                const res = await fetch(`/api/quest/${id}/complete`, { method: 'POST' });
+                if (res.ok) {
+                    btn.textContent = 'Fait';
+                    btn.classList.add('done');
+                    setTimeout(loadQuests, 800);
+                } else {
+                    btn.textContent = 'Erreur';
+                    setTimeout(() => { btn.disabled = false; btn.textContent = 'Faire'; }, 1500);
+                }
+            } catch {
+                btn.textContent = 'Erreur';
+                setTimeout(() => { btn.disabled = false; btn.textContent = 'Faire'; }, 1500);
+            }
+        }
+
+        document.getElementById('completeAllBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.textContent = 'En cours...';
+            try {
+                const res = await fetch('/api/quests/complete-all', { method: 'POST' });
+                const data = await res.json();
+                this.textContent = `${data.completed || 0} fait`;
+                setTimeout(() => { this.disabled = false; this.textContent = 'Tout faire'; loadQuests(); }, 1200);
+            } catch {
+                this.textContent = 'Erreur';
+                setTimeout(() => { this.disabled = false; this.textContent = 'Tout faire'; }, 1500);
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = '/login';
+        });
+
+        loadUser();
+        loadQuests();
+    </script>
+</body>
+</html>
