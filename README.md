@@ -14,7 +14,6 @@ A Discord.js bot to manage and complete quests automatically. Now includes a web
 
 ### Web Dashboard
 - **Login with Discord Token**: Enter your Discord user token to connect
-- **Role Verification**: Only users with the "buyer" role can access the dashboard
 - **User Profile**: View your Discord profile with avatar
 - **Quest Statistics**: See total quests, completed, and remaining
 - **Progress Tracking**: Visual progress bar showing completion percentage
