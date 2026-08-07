@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard — Quest Dashboard</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="dashboard-page">
     <div class="dashboard-container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-brand"><span class="dot">◆</span> Quest Dashboard</div>
+            <div class="sidebar-brand">Quest Dashboard</div>
 
             <div class="sidebar-header">
                 <img id="sidebarAvatar" src="" alt="Avatar" class="sidebar-avatar">
-                <div class="sidebar-user">
+                <div>
                     <div id="sidebarUsername" class="sidebar-username">Username</div>
                     <div id="sidebarTag" class="sidebar-tag">#0000</div>
                 </div>
@@ -31,10 +28,8 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="header">
-                <div>
-                    <h1 id="greeting">Welcome!</h1>
-                    <p class="header-sub">Track your progress and clear every quest in one click.</p>
-                </div>
+                <h1 id="greeting">Welcome!</h1>
+                <p class="header-sub">Track your progress and clear every quest in one click.</p>
                 <div class="header-stats">
                     <div class="header-stat">
                         <span class="stat-label">Remaining</span>
@@ -131,12 +126,12 @@
                     return;
                 }
 
-                list.innerHTML = data.uncompleted.map((q, i) => {
+                list.innerHTML = data.uncompleted.map((q) => {
                     const expiresAt = new Date(q.config.expires_at);
                     const timeLeft = getTimeRemaining(expiresAt);
 
                     return `
-                        <div class="quest-card" data-id="${q.id}" style="animation-delay:${i * 45}ms">
+                        <div class="quest-card" data-id="${q.id}">
                             <div class="quest-left">
                                 <div>
                                     <div class="quest-title">${q.config.messages.quest_name}</div>

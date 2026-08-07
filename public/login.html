@@ -3,28 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login — Quest Dashboard</title>
+    <title>Login</title>
     <link rel="stylesheet" href="/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="login-page">
-    <div class="login-wrapper">
-        <div class="login-box">
-            <div class="login-mark">◆</div>
-            <h1 class="login-title">Quest Dashboard</h1>
-            <p class="login-sub">Sign in with your Discord token to sync and complete your quests.</p>
+    <div class="login-box">
+        <h1 class="login-title">Quest Dashboard</h1>
+        <p class="login-sub">Login with your Discord token</p>
 
-            <form id="loginForm">
-                <input type="password" id="tokenInput" placeholder="Paste your token here..." required autocomplete="off" spellcheck="false">
-                <button type="submit">Login</button>
-                <div id="loginError" class="login-error"></div>
-            </form>
+        <form id="loginForm">
+            <input type="password" id="tokenInput" placeholder="Paste your token here..." required autocomplete="off">
+            <button type="submit">Login</button>
+            <div id="loginError" class="login-error"></div>
+        </form>
 
-            <p class="login-foot">Check the Discord channel for how to get your token</p>
-        </div>
+        <p class="login-foot">Check the Discord channel for how to get your token</p>
     </div>
+
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();

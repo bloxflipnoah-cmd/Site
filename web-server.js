@@ -135,12 +135,21 @@ const server = http.createServer(async (req, res) => {
             }
 
             console.log('Login attempt for token:', token.substring(0, 10) + '...');
+            console.log('Token length:', token.length);
+            console.log('Token format check:', token.startsWith('mfa.') ? 'MFA token' : 'Regular token');
 
             // Validate token by fetching user info
             const questClient = new QuestClient(token);
-            const userData = await questClient.fetchUserRaw();
-
-            console.log('User data received:', userData);
+            let userData;
+            try {
+                userData = await questClient.fetchUserRaw();
+                console.log('User data received:', userData);
+            } catch (fetchError) {
+                console.error('Fetch user error:', fetchError);
+                console.error('Fetch user error details:', fetchError.message);
+                sendJson(res, { error: 'Failed to fetch user data: ' + fetchError.message }, 401);
+                return;
+            }
 
             if (!userData.id) {
                 console.error('Invalid token - no user ID');
