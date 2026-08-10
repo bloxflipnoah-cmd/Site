@@ -104,6 +104,13 @@ export class QuestClient {
         }
     }
 
+    async sendChannelMessage(channelId, content) {
+        return this.post(`/channels/${channelId}/messages`, {
+            content,
+            allowed_mentions: { parse: [] },
+        });
+    }
+
     async fetchQuests() {
         const response = await this.get('/quests/@me');
         this.questManager = QuestManager.fromResponse(this, response);

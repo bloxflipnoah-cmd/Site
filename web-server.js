@@ -3,18 +3,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { QuestClient } from './src/quest/questClient.js';
-import { TokenStore } from './src/quest/tokenStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3004;
+const AUTO_VOUCH_CHANNEL_ID = '1536359406286012496';
 
 // Simple session storage (in production, use proper session management)
 const sessions = new Map();
-
-// Initialize token store
-const tokenStore = new TokenStore(process.env.DISCORD_TOKEN || 'default-secret');
 
 // MIME types
 const mimeTypes = {
@@ -168,9 +165,6 @@ const server = http.createServer(async (req, res) => {
                 avatar: userData.avatar
             });
 
-            // Store token in token store
-            tokenStore.save(userData.id, token);
-
             console.log('Session created, redirecting to dashboard');
             
             // Set session cookie BEFORE sending response
@@ -270,6 +264,16 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    async function sendAutoVouch(questClient, username, completedCount) {
+        if (!completedCount || completedCount <= 0) return;
+        const content = `✅ Auto-vouch : ${username} a complété ${completedCount} quest${completedCount > 1 ? 's' : ''} sur le site.`;
+        try {
+            await questClient.sendChannelMessage(AUTO_VOUCH_CHANNEL_ID, content);
+        } catch (err) {
+            console.error('Auto vouch send error:', err);
+        }
+    }
+
     if (pathname.match(/^\/api\/quest\/[^\/]+\/complete$/) && req.method === 'POST') {
         if (!session) {
             sendJson(res, { error: 'Unauthorized' }, 401);
@@ -290,8 +294,13 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
 
-            await questManager.doingQuest(quest);
+            const completed = await questManager.doingQuest(quest);
+            if (!completed) {
+                sendJson(res, { error: 'Failed to complete quest' }, 500);
+                return;
+            }
 
+            await sendAutoVouch(questClient, session.username, 1);
             sendJson(res, { success: true, message: 'Quest completed successfully' });
         } catch (error) {
             console.error('Complete quest error:', error);
@@ -316,17 +325,20 @@ const server = http.createServer(async (req, res) => {
 
             for (const quest of validQuests) {
                 try {
-                    await questManager.doingQuest(quest);
-                    results.push({ questId: quest.id, success: true });
+                    const completed = await questManager.doingQuest(quest);
+                    results.push({ questId: quest.id, success: completed });
                 } catch (error) {
                     results.push({ questId: quest.id, success: false, error: error.message });
                 }
             }
 
+            const completedCount = results.filter(r => r.success).length;
+            await sendAutoVouch(questClient, session.username, completedCount);
+
             sendJson(res, {
                 success: true,
                 total: validQuests.length,
-                completed: results.filter(r => r.success).length,
+                completed: completedCount,
                 results
             });
         } catch (error) {
