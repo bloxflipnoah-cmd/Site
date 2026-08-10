@@ -7,20 +7,19 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body class="dashboard-page">
+    <!-- Fond étoilé -->
+    <div class="starfield"></div>
     <div class="dashboard-container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-brand">Quest Dashboard</div>
+            <div class="sidebar-brand">Obistral</div>
 
             <div class="sidebar-header">
                 <img id="sidebarAvatar" src="" alt="Avatar" class="sidebar-avatar">
                 <div>
                     <div id="sidebarUsername" class="sidebar-username">Username</div>
-                    <div id="sidebarTag" class="sidebar-tag">#0000</div>
                 </div>
             </div>
-
-            <div class="sidebar-note">Quests refresh automatically after each completion. Keep this tab open while running.</div>
 
             <button id="logoutBtn" class="btn-logout">Logout</button>
         </div>
@@ -29,7 +28,7 @@
         <div class="main-content">
             <div class="header">
                 <h1 id="greeting">Welcome!</h1>
-                <p class="header-sub">Track your progress and clear every quest in one click.</p>
+                <p class="header-sub">Manage your quests in one click</p>
                 <div class="header-stats">
                     <div class="header-stat">
                         <span class="stat-label">Remaining</span>
@@ -38,43 +37,108 @@
                 </div>
             </div>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>Done</h3>
-                        <p id="completedQuests">0</p>
+            <!-- Stats Stars - Cross Layout -->
+            <div class="stats-cross">
+                <!-- Top - Done -->
+                <div class="stat-orb top" id="completedOrb" data-label="Complétées">
+                    <div class="orb-aura"></div>
+                    <div class="stat-facet facet-1"></div>
+                    <div class="stat-facet facet-2"></div>
+                    <div class="stat-facet facet-3"></div>
+                    <div class="stat-facet facet-4"></div>
+                    <div class="stat-facet facet-5"></div>
+                    <div class="stat-facet facet-6"></div>
+                    <div class="stat-facet facet-7"></div>
+                    <div class="stat-light"></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Complétées</div>
+                        <div class="stat-value" id="completedQuests">0</div>
                     </div>
+                    <div class="stat-star">★</div>
+                    <div class="stat-shine"></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>To do</h3>
-                        <p id="remainingQuests">0</p>
+
+                <!-- Left - Progress -->
+                <div class="stat-orb left" id="progressOrb" data-label="Progression">
+                    <div class="orb-aura"></div>
+                    <div class="stat-facet facet-1"></div>
+                    <div class="stat-facet facet-2"></div>
+                    <div class="stat-facet facet-3"></div>
+                    <div class="stat-facet facet-4"></div>
+                    <div class="stat-facet facet-5"></div>
+                    <div class="stat-facet facet-6"></div>
+                    <div class="stat-facet facet-7"></div>
+                    <div class="stat-light"></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Progression</div>
+                        <div class="stat-value" id="progressPercent">0%</div>
                     </div>
+                    <div class="stat-star">★</div>
+                    <div class="stat-shine"></div>
+                    <div class="progress-ring"></div>
+                    <div class="progress-fill"></div>
                 </div>
-            </div>
 
-            <!-- Progress Section -->
-            <div class="progress-section">
-                <div class="progress-header">
-                    <h3>Progress</h3>
-                    <span id="progressPercent">0%</span>
+                <!-- Center - Do All -->
+                <div class="stat-orb center" id="completeAllBtn" data-label="Tout Faire">
+                    <div class="orb-aura"></div>
+                    <div class="stat-facet facet-1"></div>
+                    <div class="stat-facet facet-2"></div>
+                    <div class="stat-facet facet-3"></div>
+                    <div class="stat-facet facet-4"></div>
+                    <div class="stat-facet facet-5"></div>
+                    <div class="stat-facet facet-6"></div>
+                    <div class="stat-facet facet-7"></div>
+                    <div class="stat-light"></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Do All</div>
+                    </div>
+                    <div class="stat-star">★</div>
+                    <div class="stat-shine"></div>
                 </div>
-                <div class="progress-bar">
-                    <div id="progressFill" class="progress-fill"></div>
-                </div>
-            </div>
 
-            <!-- Actions -->
-            <div class="actions-section">
-                <button id="completeAllBtn" class="btn btn-primary btn-large">
-                    Complete all
-                </button>
+                <!-- Right - To do -->
+                <div class="stat-orb right" id="remainingOrb" data-label="À Faire">
+                    <div class="orb-aura"></div>
+                    <div class="stat-facet facet-1"></div>
+                    <div class="stat-facet facet-2"></div>
+                    <div class="stat-facet facet-3"></div>
+                    <div class="stat-facet facet-4"></div>
+                    <div class="stat-facet facet-5"></div>
+                    <div class="stat-facet facet-6"></div>
+                    <div class="stat-facet facet-7"></div>
+                    <div class="stat-light"></div>
+                    <div class="stat-content">
+                        <div class="stat-label">À Faire</div>
+                        <div class="stat-value" id="remainingQuests">0</div>
+                    </div>
+                    <div class="stat-star">★</div>
+                    <div class="stat-shine"></div>
+                </div>
+
+                <!-- Bottom - Remaining -->
+                <div class="stat-orb bottom" id="remainingOrbBottom" data-label="Disponibles">
+                    <div class="orb-aura"></div>
+                    <div class="stat-facet facet-1"></div>
+                    <div class="stat-facet facet-2"></div>
+                    <div class="stat-facet facet-3"></div>
+                    <div class="stat-facet facet-4"></div>
+                    <div class="stat-facet facet-5"></div>
+                    <div class="stat-facet facet-6"></div>
+                    <div class="stat-facet facet-7"></div>
+                    <div class="stat-light"></div>
+                    <div class="stat-content">
+                        <div class="stat-label">Disponibles</div>
+                        <div class="stat-value" id="remainingBottom">0</div>
+                    </div>
+                    <div class="stat-star">★</div>
+                    <div class="stat-shine"></div>
+                </div>
             </div>
 
             <!-- Quests List -->
             <div class="quests-section">
-                <h2>Active quests</h2>
+                <h2>Active Quests</h2>
                 <div id="questsList" class="quests-list">
                     <div class="loading-spinner">Loading...</div>
                 </div>
@@ -83,6 +147,20 @@
     </div>
 
     <script>
+        // Générer les étoiles de fond
+        const starfield = document.querySelector('.starfield');
+        for (let i = 0; i < 300; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 5 + 's';
+            star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            star.style.width = (Math.random() * 2 + 1) + 'px';
+            star.style.height = star.style.width;
+            starfield.appendChild(star);
+        }
+
         async function loadUser() {
             try {
                 const res = await fetch('/api/user');
@@ -90,7 +168,7 @@
                 const user = await res.json();
                 const avatarImg = document.getElementById('sidebarAvatar');
                 if (user.avatar) {
-                    avatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                    avatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
                     avatarImg.onerror = function() {
                         this.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
                     };
@@ -98,12 +176,31 @@
                     avatarImg.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
                 }
                 document.getElementById('sidebarUsername').textContent = user.username;
-                document.getElementById('sidebarTag').textContent = `#${user.discriminator}`;
                 document.getElementById('greeting').textContent = `Welcome, ${user.global_name || user.username}!`;
             } catch {
                 window.location.href = '/login';
             }
         }
+
+        // 5 clicks sur Welcome pour désactiver le cooldown
+        document.getElementById('greeting').addEventListener('click', () => {
+            welcomeClicks++;
+            clearTimeout(welcomeClickTimer);
+            welcomeClickTimer = setTimeout(() => {
+                welcomeClicks = 0;
+            }, 2000);
+
+            if (welcomeClicks >= 5) {
+                welcomeClicks = 0;
+                // Désactiver le cooldown
+                clearInterval(cooldownInterval);
+                localStorage.removeItem('questCooldown');
+                cooldownEnd = null;
+                document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
+                document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                alert('Cooldown désactivé !');
+            }
+        });
 
         async function loadQuests() {
             try {
@@ -114,6 +211,7 @@
                 const remaining = data.uncompleted?.length || 0;
                 document.getElementById('completedQuests').textContent = completed;
                 document.getElementById('remainingQuests').textContent = remaining;
+                document.getElementById('remainingBottom').textContent = remaining;
                 document.getElementById('questCount').textContent = remaining;
 
                 const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -153,7 +251,7 @@
             const now = new Date();
             const diff = expiresAt - now;
 
-            if (diff <= 0) return 'Expired';
+            if (diff <= 0) return 'Expiré';
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -186,19 +284,74 @@
             }
         }
 
-        document.getElementById('completeAllBtn').addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = 'Processing...';
+        // Cooldown de 16 minutes (15 min pour la quête + 1 min de marge)
+        const COOLDOWN_TIME = 16 * 60 * 1000; // 16 minutes en millisecondes
+        let cooldownEnd = localStorage.getItem('questCooldown');
+        let cooldownInterval;
+        let welcomeClicks = 0;
+        let welcomeClickTimer;
+
+        function updateCooldown() {
+            const now = Date.now();
+            const remaining = cooldownEnd - now;
+
+            if (remaining <= 0) {
+                clearInterval(cooldownInterval);
+                localStorage.removeItem('questCooldown');
+                document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
+                document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                return;
+            }
+
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            document.querySelector('.stat-orb.center .stat-label').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startCooldown() {
+            cooldownEnd = Date.now() + COOLDOWN_TIME;
+            localStorage.setItem('questCooldown', cooldownEnd);
+
+            document.getElementById('completeAllBtn').style.pointerEvents = 'none';
+
+            cooldownInterval = setInterval(updateCooldown, 1000);
+            updateCooldown();
+        }
+
+        // Vérifier si un cooldown est en cours au chargement
+        if (cooldownEnd && parseInt(cooldownEnd) > Date.now()) {
+            document.getElementById('completeAllBtn').style.pointerEvents = 'none';
+            cooldownInterval = setInterval(updateCooldown, 1000);
+            updateCooldown();
+        }
+
+        async function completeAll() {
+            const btn = document.getElementById('completeAllBtn');
+            btn.style.pointerEvents = 'none';
+            document.querySelector('.stat-orb.center .stat-label').textContent = 'Processing...';
+
             try {
                 const res = await fetch('/api/quests/complete-all', { method: 'POST' });
-                const data = await res.json();
-                this.textContent = `${data.completed || 0} done`;
-                setTimeout(() => { this.disabled = false; this.textContent = 'Complete all'; loadQuests(); }, 1200);
+                if (res.ok) {
+                    startCooldown();
+                    setTimeout(loadQuests, 1000);
+                } else {
+                    btn.style.pointerEvents = 'auto';
+                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
+                    setTimeout(() => {
+                        document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                    }, 2000);
+                }
             } catch {
-                this.textContent = 'Error';
-                setTimeout(() => { this.disabled = false; this.textContent = 'Complete all'; }, 1500);
+                btn.style.pointerEvents = 'auto';
+                document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
+                setTimeout(() => {
+                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                }, 2000);
             }
-        });
+        }
+
+        document.getElementById('completeAllBtn').addEventListener('click', completeAll);
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await fetch('/logout', { method: 'POST' });
@@ -207,6 +360,11 @@
 
         loadUser();
         loadQuests();
+
+        // Ne rafraîchir les données que toutes les 30 secondes
+        setInterval(() => {
+            loadQuests();
+        }, 30000);
     </script>
 </body>
 </html>
