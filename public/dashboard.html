@@ -40,7 +40,7 @@
             <!-- Stats Stars - Cross Layout -->
             <div class="stats-cross">
                 <!-- Top - Done -->
-                <div class="stat-orb top" id="completedOrb" data-label="Complétées">
+                <div class="stat-orb top" id="completedOrb" data-label="Done">
                     <div class="orb-aura"></div>
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
@@ -51,7 +51,7 @@
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
                     <div class="stat-content">
-                        <div class="stat-label">Complétées</div>
+                        <div class="stat-label">Done</div>
                         <div class="stat-value" id="completedQuests">0</div>
                     </div>
                     <div class="stat-star">★</div>
@@ -59,7 +59,7 @@
                 </div>
 
                 <!-- Left - Progress -->
-                <div class="stat-orb left" id="progressOrb" data-label="Progression">
+                <div class="stat-orb left" id="progressOrb" data-label="Progress">
                     <div class="orb-aura"></div>
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
@@ -70,7 +70,7 @@
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
                     <div class="stat-content">
-                        <div class="stat-label">Progression</div>
+                        <div class="stat-label">Progress</div>
                         <div class="stat-value" id="progressPercent">0%</div>
                     </div>
                     <div class="stat-star">★</div>
@@ -80,7 +80,7 @@
                 </div>
 
                 <!-- Center - Do All -->
-                <div class="stat-orb center" id="completeAllBtn" data-label="Tout Faire">
+                <div class="stat-orb center" id="completeAllBtn" data-label="Do All">
                     <div class="orb-aura"></div>
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- Right - To do -->
-                <div class="stat-orb right" id="remainingOrb" data-label="À Faire">
+                <div class="stat-orb right" id="remainingOrb" data-label="To do">
                     <div class="orb-aura"></div>
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
@@ -109,7 +109,7 @@
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
                     <div class="stat-content">
-                        <div class="stat-label">À Faire</div>
+                        <div class="stat-label">To do</div>
                         <div class="stat-value" id="remainingQuests">0</div>
                     </div>
                     <div class="stat-star">★</div>
@@ -117,7 +117,7 @@
                 </div>
 
                 <!-- Bottom - Remaining -->
-                <div class="stat-orb bottom" id="remainingOrbBottom" data-label="Disponibles">
+                <div class="stat-orb bottom" id="remainingOrbBottom" data-label="Remaining">
                     <div class="orb-aura"></div>
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
@@ -128,7 +128,7 @@
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
                     <div class="stat-content">
-                        <div class="stat-label">Disponibles</div>
+                        <div class="stat-label">Remaining</div>
                         <div class="stat-value" id="remainingBottom">0</div>
                     </div>
                     <div class="stat-star">★</div>
@@ -197,7 +197,7 @@
                 localStorage.removeItem('questCooldown');
                 cooldownEnd = null;
                 document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
-                document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
                 alert('Cooldown désactivé !');
             }
         });
@@ -299,7 +299,7 @@
                 clearInterval(cooldownInterval);
                 localStorage.removeItem('questCooldown');
                 document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
-                document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
                 return;
             }
 
@@ -339,14 +339,14 @@
                     btn.style.pointerEvents = 'auto';
                     document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
                     setTimeout(() => {
-                        document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                        document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
                     }, 2000);
                 }
             } catch {
                 btn.style.pointerEvents = 'auto';
                 document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
                 setTimeout(() => {
-                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Tout Faire';
+                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
                 }, 2000);
             }
         }
