@@ -109,13 +109,58 @@
       position: absolute;
       top: 30px;
       right: 30px;
-      padding: 12px;
+      width: 48px;
+      height: 48px;
       border: 1px solid rgba(120, 140, 255, 0.2);
       border-radius: 12px;
       background: rgba(62, 104, 255, 0.1);
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
       animation: slideInRight 0.8s ease both;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .discord-icon {
+      position: relative;
+      width: 28px;
+      height: 20px;
+    }
+
+    .discord-icon::before {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      top: 4px;
+      left: 2px;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .discord-icon::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      top: 4px;
+      right: 2px;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .discord-mouth {
+      position: absolute;
+      width: 12px;
+      height: 4px;
+      background: #fff;
+      border-radius: 0 0 6px 6px;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     @keyframes slideInRight {
@@ -626,7 +671,8 @@
       .discord-logo {
         top: 20px;
         right: 20px;
-        padding: 10px;
+        width: 40px;
+        height: 40px;
       }
     }
   </style>
@@ -641,7 +687,9 @@
 
     <!-- Logo Discord -->
     <a href="https://discord.gg/kDbevkbHvX" target="_blank" class="discord-logo">
-      <img src="discord-logo.png" alt="Discord" style="width: 24px; height: 24px;">
+      <div class="discord-icon">
+        <div class="discord-mouth"></div>
+      </div>
     </a>
 
     <!-- LA CARTE EST L'ORBE -->
