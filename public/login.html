@@ -124,41 +124,44 @@
 
     .discord-icon {
       position: relative;
-      width: 28px;
-      height: 20px;
+      width: 32px;
+      height: 24px;
     }
 
-    .discord-icon::before {
-      content: '';
+    .discord-head {
       position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #fff;
-      border-radius: 50%;
-      top: 4px;
-      left: 2px;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+      width: 32px;
+      height: 24px;
+      background: #5865F2;
+      border-radius: 8px;
+      top: 0;
+      left: 0;
     }
 
-    .discord-icon::after {
-      content: '';
+    .discord-eye {
       position: absolute;
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       background: #fff;
       border-radius: 50%;
-      top: 4px;
-      right: 2px;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+      top: 6px;
+    }
+
+    .discord-eye.left {
+      left: 5px;
+    }
+
+    .discord-eye.right {
+      right: 5px;
     }
 
     .discord-mouth {
       position: absolute;
-      width: 12px;
-      height: 4px;
+      width: 8px;
+      height: 3px;
       background: #fff;
-      border-radius: 0 0 6px 6px;
-      bottom: 2px;
+      border-radius: 0 0 4px 4px;
+      bottom: 4px;
       left: 50%;
       transform: translateX(-50%);
     }
@@ -688,6 +691,9 @@
     <!-- Logo Discord -->
     <a href="https://discord.gg/kDbevkbHvX" target="_blank" class="discord-logo">
       <div class="discord-icon">
+        <div class="discord-head"></div>
+        <div class="discord-eye left"></div>
+        <div class="discord-eye right"></div>
         <div class="discord-mouth"></div>
       </div>
     </a>
