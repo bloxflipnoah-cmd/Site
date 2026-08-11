@@ -600,9 +600,143 @@ body::after {
     transform: none;
 }
 
+/* =========================================
+   ADMIN STATS SECTION
+========================================= */
+
+.admin-stats-section {
+    margin-top: 40px;
+    padding: 25px;
+    border: 1px solid rgba(145, 160, 255, .18);
+    border-radius: 22px;
+    background: linear-gradient(
+        145deg,
+        rgba(8, 11, 35, .76),
+        rgba(3, 5, 18, .68)
+    );
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, .62),
+        0 0 70px rgba(51, 74, 255, .08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.admin-stats-section h2 {
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.admin-stat-card {
+    padding: 20px;
+    border: 1px solid rgba(145, 160, 255, .18);
+    border-radius: 15px;
+    background: linear-gradient(
+        145deg,
+        rgba(8, 11, 35, .76),
+        rgba(3, 5, 18, .68)
+    );
+    box-shadow:
+        0 15px 50px rgba(0, 0, 0, .42),
+        0 0 40px rgba(51, 74, 255, .08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+.admin-stat-label {
+    color: #9198ba;
+    font-size: 12px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+.admin-stat-value {
+    color: #dcecff;
+    font-size: 28px;
+    font-weight: 750;
+    text-shadow: 0 0 20px rgba(0, 238, 255, 0.5);
+}
+
 .btn-quest.done {
     background: #31c995;
     color: #04150f;
+}
+
+/* =========================================
+   ADMIN STATS SECTION
+========================================= */
+
+.admin-stats-section {
+    margin-top: 40px;
+    padding: 25px;
+    border: 1px solid rgba(145, 160, 255, .18);
+    border-radius: 22px;
+    background: linear-gradient(
+        145deg,
+        rgba(8, 11, 35, .76),
+        rgba(3, 5, 18, .68)
+    );
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, .62),
+        0 0 70px rgba(51, 74, 255, .08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.admin-stats-section h2 {
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.admin-stat-card {
+    padding: 20px;
+    border: 1px solid rgba(145, 160, 255, .18);
+    border-radius: 15px;
+    background: linear-gradient(
+        145deg,
+        rgba(8, 11, 35, .76),
+        rgba(3, 5, 18, .68)
+    );
+    box-shadow:
+        0 15px 50px rgba(0, 0, 0, .42),
+        0 0 40px rgba(51, 74, 255, .08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+.admin-stat-label {
+    color: #9198ba;
+    font-size: 12px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+.admin-stat-value {
+    color: #dcecff;
+    font-size: 28px;
+    font-weight: 750;
+    text-shadow: 0 0 20px rgba(0, 238, 255, 0.5);
 }
 
 .loading-spinner {
@@ -2214,6 +2348,42 @@ body {
   .orb-star {
     font-size: 70px;
   }
+
+  .send-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 12px 30px;
+    background: linear-gradient(110deg, #4052ff, #3e68ff 48%, #17c8f2);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgba(44, 83, 255, .22);
+    transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+  }
+
+  .send-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow: 0 15px 35px rgba(44, 130, 255, .28);
+  }
+
+  .send-btn:active {
+    transform: translateY(0);
+  }
+
+  .send-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* Cacher le bouton Send sur desktop */
+.send-btn {
+  display: none;
 }
 
 @media (max-width: 600px) {
@@ -2236,5 +2406,133 @@ body {
 
     .btn-quest {
         width: 100%;
+    }
+
+    /* Ajuster les orbes du dashboard pour mobile */
+    .stat-orb, .progress-orb, .action-orb {
+      width: 120px;
+      height: 120px;
+    }
+
+    .stat-orb.center {
+      width: 140px;
+      height: 140px;
+    }
+
+    .stats-cross {
+      gap: 20px;
+      padding: 10px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+    }
+
+    .stat-value {
+      font-size: 12px;
+    }
+
+    .stat-star {
+      font-size: 40px;
+    }
+
+    /* Ajuster les facettes pour mobile */
+    .stat-facet.facet-1 {
+      width: 80px;
+      height: 75px;
+      left: -8px;
+      top: 15px;
+    }
+
+    .stat-facet.facet-2 {
+      width: 50px;
+      height: 90px;
+      left: 5px;
+      top: 50px;
+    }
+
+    .stat-facet.facet-3 {
+      width: 95px;
+      height: 65px;
+      left: 35px;
+      top: -3px;
+    }
+
+    .stat-facet.facet-4 {
+      width: 70px;
+      height: 90px;
+      right: -2px;
+      top: 12px;
+    }
+
+    .stat-facet.facet-5 {
+      width: 70px;
+      height: 80px;
+      right: -8px;
+      top: 55px;
+    }
+
+    .stat-facet.facet-6 {
+      width: 100px;
+      height: 50px;
+      left: 25px;
+      bottom: -8px;
+    }
+
+    .stat-facet.facet-7 {
+      width: 50px;
+      height: 50px;
+      right: 15px;
+      bottom: 5px;
+    }
+
+    /* Ajuster les facettes pour l'orbe centrale mobile */
+    .stat-orb.center .stat-facet.facet-1 {
+      width: 95px;
+      height: 90px;
+      left: -10px;
+      top: 18px;
+    }
+
+    .stat-orb.center .stat-facet.facet-2 {
+      width: 60px;
+      height: 110px;
+      left: 8px;
+      top: 60px;
+    }
+
+    .stat-orb.center .stat-facet.facet-3 {
+      width: 110px;
+      height: 80px;
+      left: 45px;
+      top: -5px;
+    }
+
+    .stat-orb.center .stat-facet.facet-4 {
+      width: 85px;
+      height: 110px;
+      right: -5px;
+      top: 15px;
+    }
+
+    .stat-orb.center .stat-facet.facet-5 {
+      width: 85px;
+      height: 95px;
+      right: -12px;
+      top: 70px;
+    }
+
+    .stat-orb.center .stat-facet.facet-6 {
+      width: 120px;
+      height: 65px;
+      left: 35px;
+      bottom: -12px;
+    }
+
+    .stat-orb.center .stat-facet.facet-7 {
+      width: 65px;
+      height: 65px;
+      right: 20px;
+      bottom: 8px;
     }
 }

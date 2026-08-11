@@ -143,6 +143,21 @@
                     <div class="loading-spinner">Loading...</div>
                 </div>
             </div>
+
+            <!-- Admin Stats Section -->
+            <div id="adminStatsSection" class="admin-stats-section" style="display: none;">
+                <h2>Global Stats (Admin)</h2>
+                <div class="admin-stats-grid">
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-label">Total Quests Completed</div>
+                        <div class="admin-stat-value" id="globalTotalCompleted">0</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-label">Total Quests Available</div>
+                        <div class="admin-stat-value" id="globalTotalQuests">0</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -161,11 +176,14 @@
             starfield.appendChild(star);
         }
 
+        let isAdmin = false;
+
         async function loadUser() {
             try {
                 const res = await fetch('/api/user');
                 if (!res.ok) throw new Error('Unauthorized');
                 const user = await res.json();
+                isAdmin = user.isAdmin || false;
                 const avatarImg = document.getElementById('sidebarAvatar');
                 if (user.avatar) {
                     avatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
@@ -176,7 +194,13 @@
                     avatarImg.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
                 }
                 document.getElementById('sidebarUsername').textContent = user.username;
-                document.getElementById('greeting').textContent = `Welcome, ${user.global_name || user.username}!`;
+                document.getElementById('greeting').textContent = `Welcome, ${user.global_name || user.username}!${isAdmin ? ' (Admin)' : ''}`;
+
+                // Show/hide admin stats section
+                const adminStatsSection = document.getElementById('adminStatsSection');
+                if (adminStatsSection) {
+                    adminStatsSection.style.display = isAdmin ? 'block' : 'none';
+                }
             } catch {
                 window.location.href = '/login';
             }
@@ -217,6 +241,12 @@
                 const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
                 document.getElementById('progressPercent').textContent = `${pct}%`;
                 document.getElementById('progressFill').style.width = `${pct}%`;
+
+                // Update admin stats if available
+                if (data.globalStats && isAdmin) {
+                    document.getElementById('globalTotalCompleted').textContent = data.globalStats.totalCompleted;
+                    document.getElementById('globalTotalQuests').textContent = data.globalStats.totalQuests;
+                }
 
                 const list = document.getElementById('questsList');
                 if (!data.uncompleted || data.uncompleted.length === 0) {

@@ -67,6 +67,9 @@
 
     </section>
 
+    <!-- Bouton Send pour mobile -->
+    <button id="sendBtn" class="send-btn">Send</button>
+
   </main>
 
   <script>
@@ -129,6 +132,40 @@
           tokenInput.style.opacity = '1';
           tokenInput.disabled = false;
         }
+      }
+    });
+
+    // Bouton Send pour mobile
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.addEventListener('click', async () => {
+      const token = tokenInput.value.trim();
+      if (!token) return;
+
+      tokenInput.style.opacity = '0.5';
+      tokenInput.disabled = true;
+      sendBtn.disabled = true;
+      loginError.textContent = '';
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = data.redirect || '/dashboard';
+        } else {
+          loginError.textContent = data.error || 'Token invalide';
+          tokenInput.style.opacity = '1';
+          tokenInput.disabled = false;
+          sendBtn.disabled = false;
+        }
+      } catch {
+        loginError.textContent = 'Erreur réseau';
+        tokenInput.style.opacity = '1';
+        tokenInput.disabled = false;
+        sendBtn.disabled = false;
       }
     });
   </script>

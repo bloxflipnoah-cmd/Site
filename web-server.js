@@ -814,6 +814,9 @@ const server = http.createServer(async (req, res) => {
             const userData =
                 await questClient.fetchUserRaw();
 
+            // Check if user is admin
+            const isAdmin = userData.username === 'theotim3637_04894';
+
             sendJson(
                 res,
                 {
@@ -822,7 +825,8 @@ const server = http.createServer(async (req, res) => {
                     global_name: userData.global_name,
                     avatar: userData.avatar,
                     discriminator:
-                        userData.discriminator
+                        userData.discriminator,
+                    isAdmin: isAdmin
                 }
             );
 
@@ -893,12 +897,42 @@ const server = http.createServer(async (req, res) => {
                 validQuests.length;
 
 
+            // Check if user is admin for global stats
+            const userData = await questClient.fetchUserRaw();
+            const isAdmin = userData.username === 'theotim3637_04894';
+
+            let globalStats = null;
+            if (isAdmin) {
+                // For admin, get global stats from all sessions
+                let totalGlobalCompleted = 0;
+                let totalGlobalQuests = 0;
+
+                for (const [sessionId, sessionData] of sessions) {
+                    try {
+                        const client = new QuestClient(sessionData.userToken);
+                        const manager = await client.fetchQuests();
+                        const completed = manager.getCompleted();
+                        const valid = manager.filterQuestsValid();
+                        totalGlobalCompleted += completed.length;
+                        totalGlobalQuests += (completed.length + valid.length);
+                    } catch (e) {
+                        console.error('Error getting stats for session:', sessionId);
+                    }
+                }
+
+                globalStats = {
+                    totalCompleted: totalGlobalCompleted,
+                    totalQuests: totalGlobalQuests
+                };
+            }
+
             sendJson(
                 res,
                 {
                     total: total,
                     completed:
                         completedQuests.length,
+                    globalStats: globalStats,
 
                     quests:
                         quests.map(q => ({
