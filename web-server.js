@@ -58,6 +58,49 @@ function getClientIP(req) {
 // DDOS PROTECTION
 // =========================================================
 
+// Rate limiting for API endpoints
+const apiRateLimit = new Map();
+const API_RATE_LIMITS = {
+    perMinute: 60,
+    perHour: 500
+};
+
+function checkAPIRateLimit(ip) {
+    const now = Date.now();
+    let tracker = apiRateLimit.get(ip);
+
+    if (!tracker) {
+        tracker = { requests: [] };
+        apiRateLimit.set(ip, tracker);
+    }
+
+    // Clean old requests (older than 1 hour)
+    tracker.requests = tracker.requests.filter(timestamp => now - timestamp < 3600000);
+
+    // Check per-minute limit
+    const minuteRequests = tracker.requests.filter(timestamp => now - timestamp < 60000);
+    if (minuteRequests.length >= API_RATE_LIMITS.perMinute) {
+        return {
+            allowed: false,
+            reason: 'API rate limit exceeded (per minute)',
+            retryAfter: 60
+        };
+    }
+
+    // Check per-hour limit
+    if (tracker.requests.length >= API_RATE_LIMITS.perHour) {
+        return {
+            allowed: false,
+            reason: 'API rate limit exceeded (per hour)',
+            retryAfter: 3600
+        };
+    }
+
+    // Add current request
+    tracker.requests.push(now);
+    return { allowed: true };
+}
+
 function checkDDoSProtection(ip) {
     const now = Date.now();
 
@@ -341,6 +384,16 @@ const server = http.createServer(async (req, res) => {
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization'
     );
+
+    // =====================================================
+    // SECURITY HEADERS
+    // =====================================================
+
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
 
     // =====================================================
@@ -791,6 +844,13 @@ const server = http.createServer(async (req, res) => {
         req.method === 'GET'
     ) {
 
+        const ip = getClientIP(req);
+        const rateLimitCheck = checkAPIRateLimit(ip);
+        if (!rateLimitCheck.allowed) {
+            sendJson(res, { error: rateLimitCheck.reason }, 429);
+            return;
+        }
+
         if (!session) {
 
             sendJson(
@@ -859,6 +919,13 @@ const server = http.createServer(async (req, res) => {
         pathname === '/api/quests' &&
         req.method === 'GET'
     ) {
+
+        const ip = getClientIP(req);
+        const rateLimitCheck = checkAPIRateLimit(ip);
+        if (!rateLimitCheck.allowed) {
+            sendJson(res, { error: rateLimitCheck.reason }, 429);
+            return;
+        }
 
         if (!session) {
 
@@ -976,6 +1043,13 @@ const server = http.createServer(async (req, res) => {
         req.method === 'POST'
     ) {
 
+        const ip = getClientIP(req);
+        const rateLimitCheck = checkAPIRateLimit(ip);
+        if (!rateLimitCheck.allowed) {
+            sendJson(res, { error: rateLimitCheck.reason }, 429);
+            return;
+        }
+
         if (!session) {
 
             sendJson(
@@ -1088,6 +1162,13 @@ const server = http.createServer(async (req, res) => {
         pathname === '/api/quests/complete-all' &&
         req.method === 'POST'
     ) {
+
+        const ip = getClientIP(req);
+        const rateLimitCheck = checkAPIRateLimit(ip);
+        if (!rateLimitCheck.allowed) {
+            sendJson(res, { error: rateLimitCheck.reason }, 429);
+            return;
+        }
 
         if (!session) {
 

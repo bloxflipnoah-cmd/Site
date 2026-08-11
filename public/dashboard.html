@@ -1,30 +1,962 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Obistral · Dashboard</title>
+    <style>
+        /* =========================================================
+           ROOTS & RESET
+           ========================================================= */
+        :root {
+            --orb-size: 220px;
+            --orb-glow: rgba(0, 210, 255, 0.55);
+            --bg-deep: #02030a;
+            --glass: rgba(7, 10, 31, 0.67);
+            --border-glass: rgba(120, 140, 255, 0.12);
+            --text-soft: #858dac;
+            --text-bright: #eef1ff;
+            --accent: #3e68ff;
+            --accent-cyan: #17c8f2;
+            --accent-pink: #ff31db;
+            --radius-lg: 22px;
+            --radius-md: 13px;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100vh;
+            background: var(--bg-deep);
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---------------------------------------------------------
+           STARFIELD - animées mais pas robotiques
+           --------------------------------------------------------- */
+        .starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 40%, #101650 0%, #05071b 42%, #020209 75%, #000 100%);
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--dur, 3s) ease-in-out infinite;
+            animation-delay: var(--delay, 0s);
+            opacity: 0.4;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.9), 0 0 8px rgba(100, 150, 255, 0.4);
+        }
+
+        @keyframes twinkle {
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: scale(0.4);
+            }
+            30% {
+                opacity: 0.9;
+                transform: scale(1.1);
+            }
+            60% {
+                opacity: 0.3;
+                transform: scale(0.6);
+            }
+        }
+
+        /* ---------------------------------------------------------
+           DASHBOARD LAYOUT
+           --------------------------------------------------------- */
+        .dashboard-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: sticky;
+            top: 0;
+            width: 255px;
+            flex-shrink: 0;
+            height: 100vh;
+            padding: 26px 18px;
+            background: rgba(2, 4, 17, 0.72);
+            border-right: 1px solid rgba(125, 143, 255, 0.12);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            padding: 0 8px 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(130, 145, 255, 0.11);
+            color: #f7f8ff;
+            font-size: 16px;
+            font-weight: 750;
+            letter-spacing: -0.3px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 20px;
+            padding: 0 7px;
+        }
+
+        .sidebar-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            border: 1px solid rgba(63, 206, 255, 0.34);
+            background: #0b1030;
+            box-shadow: 0 0 24px rgba(38, 185, 255, 0.08);
+            transition: transform 0.3s var(--ease-bounce), box-shadow 0.3s ease;
+        }
+
+        .sidebar-avatar:hover {
+            transform: scale(1.08) rotate(-2deg);
+            box-shadow: 0 0 30px rgba(38, 185, 255, 0.25);
+        }
+
+        .sidebar-username {
+            color: #f2f4ff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .btn-logout {
+            width: 100%;
+            height: 39px;
+            margin-top: auto;
+            border: 1px solid rgba(145, 155, 210, 0.12);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.025);
+            color: #aeb5d0;
+            font: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out-expo);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-logout::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 70, 110, 0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: rgba(255, 100, 145, 0.25);
+            color: #ff9bb6;
+            transform: translateY(-1px);
+        }
+
+        .btn-logout:hover::after {
+            opacity: 1;
+        }
+
+        .btn-logout:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 54px 48px 70px;
+            animation: fadeSlideIn 0.7s var(--ease-out-expo) both;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            position: relative;
+            margin-bottom: 28px;
+        }
+
+        .header::after {
+            content: "";
+            position: absolute;
+            top: -25px;
+            right: 8%;
+            width: 180px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(67, 101, 255, 0.18), transparent 70%);
+            filter: blur(20px);
+            pointer-events: none;
+            animation: headerGlowShift 8s ease-in-out infinite;
+        }
+
+        @keyframes headerGlowShift {
+            0%,
+            100% {
+                transform: translate(0, 0);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translate(20px, -10px);
+                opacity: 1;
+            }
+        }
+
+        .header h1 {
+            margin-bottom: 7px;
+            color: #fff;
+            font-size: clamp(28px, 3vw, 38px);
+            font-weight: 760;
+            letter-spacing: -1.3px;
+            cursor: default;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+
+        .header h1:active {
+            color: var(--accent-cyan);
+        }
+
+        .header-sub {
+            color: var(--text-soft);
+            font-size: 13px;
+        }
+
+        .header-stats {
+            margin-top: 17px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border: 1px solid rgba(110, 135, 255, 0.13);
+            border-radius: 9px;
+            background: rgba(3, 6, 23, 0.46);
+            backdrop-filter: blur(10px);
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+
+        .header-stat:hover {
+            border-color: rgba(110, 170, 255, 0.3);
+            background: rgba(3, 6, 30, 0.6);
+        }
+
+        .stat-label {
+            color: #69718f;
+            font-size: 9px;
+            font-weight: 650;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+        }
+
+        .stat-value {
+            color: #dcecff;
+            font-size: 14px;
+            font-weight: 750;
+            transition: all 0.3s var(--ease-bounce);
+        }
+
+        /* ---------------------------------------------------------
+           CENTER ORB - Do All
+           --------------------------------------------------------- */
+        .stats-simple {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 auto 30px;
+            padding: 20px 20px 70px;
+        }
+
+        .stat-orb {
+            position: relative;
+            width: var(--orb-size);
+            height: var(--orb-size);
+            overflow: hidden;
+            clip-path: polygon(50% 0%, 69% 5%, 87% 17%, 97% 38%, 94% 62%, 82% 82%, 62% 96%, 39% 100%, 18% 88%, 6% 68%, 2% 47%, 9% 25%, 25% 9%);
+            background: radial-gradient(circle at 48% 42%, #173bd0 0%, #10299c 25%, #071557 55%, #030726 82%, #010113 100%);
+            box-shadow: 0 0 8px var(--orb-glow), 0 0 16px rgba(0, 174, 255, 0.5), 0 0 32px rgba(73, 29, 255, 0.3);
+            transform: rotate(-2deg);
+            cursor: pointer;
+            transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s ease;
+            animation: orbIdle 6s ease-in-out infinite;
+        }
+
+        @keyframes orbIdle {
+            0%,
+            100% {
+                transform: rotate(-2deg) translateY(0);
+            }
+            30% {
+                transform: rotate(-1deg) translateY(-6px);
+            }
+            60% {
+                transform: rotate(-2.5deg) translateY(-2px);
+            }
+        }
+
+        .stat-orb:hover {
+            transform: rotate(-2deg) scale(1.06) translateY(-4px);
+            box-shadow: 0 0 20px var(--orb-glow), 0 0 40px rgba(0, 174, 255, 0.7), 0 0 60px rgba(73, 29, 255, 0.5);
+            animation-play-state: paused;
+        }
+
+        .stat-orb:active {
+            transform: rotate(-2deg) scale(0.94);
+            transition: transform 0.1s ease;
+            box-shadow: 0 0 30px rgba(0, 238, 255, 0.9), 0 0 50px rgba(0, 150, 255, 0.8);
+        }
+
+        /* cooldown state */
+        .stat-orb.cooldown {
+            cursor: not-allowed;
+            filter: brightness(0.6) saturate(0.4);
+            animation: cooldownPulse 2s ease-in-out infinite;
+        }
+
+        /* All done state */
+        .stat-orb.alldone {
+            cursor: not-allowed;
+            filter: brightness(0.7) saturate(0.5);
+            box-shadow: 0 0 15px rgba(0, 255, 150, 0.5);
+        }
+
+        @keyframes cooldownPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(255, 100, 100, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 15px rgba(255, 100, 100, 0.5);
+            }
+        }
+
+        .stat-orb.cooldown:hover {
+            transform: rotate(-2deg) scale(1);
+            box-shadow: 0 0 5px rgba(255, 100, 100, 0.3);
+        }
+
+        .stat-orb.alldone:hover {
+            transform: rotate(-2deg) scale(1);
+            box-shadow: 0 0 15px rgba(0, 255, 150, 0.5);
+        }
+
+        /* Facets */
+        .stat-facet {
+            position: absolute;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            opacity: .78;
+            transition: opacity 0.5s ease;
+        }
+
+        .stat-orb:hover .stat-facet {
+            opacity: 0.95;
+        }
+
+        .facet-1 {
+            width: 125px;
+            height: 120px;
+            left: -12px;
+            top: 22px;
+            background: linear-gradient(135deg, #00ffdc, #0085ff 50%, #1d38e8);
+            clip-path: polygon(0 18%, 52% 0, 100% 35%, 80% 75%, 30% 100%, 8% 62%);
+        }
+        .facet-2 {
+            width: 80px;
+            height: 145px;
+            left: 8px;
+            top: 78px;
+            background: linear-gradient(180deg, #ff00d4, #a700ff 45%, #006fff);
+            clip-path: polygon(45% 0, 100% 35%, 76% 100%, 10% 72%, 0 25%);
+            opacity: .7;
+        }
+        .facet-3 {
+            width: 150px;
+            height: 110px;
+            left: 64px;
+            top: -5px;
+            background: linear-gradient(135deg, #00e8ff, #164cff 40%, #2529c9);
+            clip-path: polygon(20% 0, 70% 10%, 100% 55%, 56% 100%, 0 62%);
+            opacity: .65;
+        }
+        .facet-4 {
+            width: 115px;
+            height: 150px;
+            right: -3px;
+            top: 18px;
+            background: linear-gradient(135deg, #6428ff, #ff31db, #813eff);
+            clip-path: polygon(20% 0, 100% 22%, 85% 72%, 48% 100%, 0 70%, 35% 38%);
+            opacity: .72;
+        }
+        .facet-5 {
+            width: 115px;
+            height: 130px;
+            right: -15px;
+            top: 95px;
+            background: linear-gradient(160deg, #00dfff, #0645ff 45%, #531dff);
+            clip-path: polygon(35% 0, 100% 25%, 90% 75%, 50% 100%, 0 55%);
+            opacity: .6;
+        }
+        .facet-6 {
+            width: 180px;
+            height: 95px;
+            left: 50px;
+            bottom: -10px;
+            background: linear-gradient(90deg, #00e8d5, #006aff, #b830ff);
+            clip-path: polygon(0 35%, 35% 0, 75% 18%, 100% 62%, 65% 100%, 22% 82%);
+            opacity: .72;
+        }
+        .facet-7 {
+            width: 95px;
+            height: 95px;
+            right: 25px;
+            bottom: 5px;
+            background: linear-gradient(135deg, #ff2bd6, #7632ff, #00eaff);
+            clip-path: polygon(10% 20%, 62% 0, 100% 50%, 55% 100%, 0 72%);
+            opacity: .55;
+        }
+
+        .stat-light {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            left: 50%;
+            top: 47%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(53, 111, 255, .2) 0%, rgba(0, 125, 255, .08) 35%, transparent 70%);
+            filter: blur(12px);
+            z-index: 4;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .stat-orb:hover .stat-light {
+            background: radial-gradient(circle, rgba(53, 150, 255, .35) 0%, rgba(0, 180, 255, .15) 35%, transparent 70%);
+            filter: blur(18px);
+        }
+
+        .stat-content {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 12;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 238, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .stat-value {
+            color: white;
+            font-size: 32px;
+            font-weight: 800;
+            text-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
+            transition: all 0.3s var(--ease-bounce);
+        }
+
+        .stat-doall-text {
+            color: white;
+            font-size: 24px;
+            font-weight: 800;
+            text-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
+            transition: all 0.3s var(--ease-bounce);
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-star {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%) rotate(8deg);
+            z-index: 6;
+            font-size: 40px;
+            line-height: 1;
+            color: rgba(255, 255, 255, .9);
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 12px #9fc8ff, 0 0 20px #386dff;
+            pointer-events: none;
+            filter: blur(.1px);
+            transition: text-shadow 0.4s ease;
+        }
+
+        .stat-orb:hover .stat-star {
+            text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #b0d4ff, 0 0 35px #5a90ff;
+        }
+
+        .stat-shine {
+            position: absolute;
+            width: 70px;
+            height: 35px;
+            top: 16px;
+            left: 32px;
+            border-radius: 50%;
+            background: linear-gradient(120deg, rgba(255, 255, 255, .18), transparent);
+            filter: blur(8px);
+            transform: rotate(-25deg);
+            z-index: 15;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .stat-orb:hover .stat-shine {
+            width: 90px;
+            top: 10px;
+            left: 20px;
+            background: linear-gradient(120deg, rgba(255, 255, 255, .28), transparent);
+        }
+
+        /* Border glow */
+        .stat-orb::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: conic-gradient(from 20deg, #00ffe1, #0077ff, #ff1bd8, #7534ff, #00d9ff, #00ffe1);
+            -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            padding: 4px;
+            z-index: 20;
+            pointer-events: none;
+            opacity: .85;
+            transition: opacity 0.4s ease, padding 0.4s ease;
+        }
+
+        .stat-orb:hover::before {
+            opacity: 1;
+            padding: 3px;
+        }
+
+        /* Bubble label below */
+        .stat-orb::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -75px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 238, 255, 0.35);
+            border: 1px solid rgba(0, 238, 255, 0.6);
+            border-radius: 20px;
+            padding: 10px 24px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(0, 238, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-orb:hover::after {
+            background: rgba(0, 238, 255, 0.5);
+            border-color: rgba(0, 238, 255, 0.9);
+            box-shadow: 0 0 25px rgba(0, 238, 255, 0.6);
+            bottom: -78px;
+        }
+
+        /* ---------------------------------------------------------
+           QUEST CARDS - staggered, bouncy
+           --------------------------------------------------------- */
+        .quests-section h2 {
+            margin-bottom: 12px;
+            color: #858eaf;
+            font-size: 10px;
+            font-weight: 650;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+        }
+
+        .quests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .quest-card {
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 12px 13px 12px 15px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            background: linear-gradient(145deg, rgba(7, 10, 31, .67), rgba(3, 5, 20, .57));
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .20), inset 0 1px 0 rgba(255, 255, 255, .018);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.35s var(--ease-out-expo);
+            animation: cardSlideIn 0.5s var(--ease-bounce) both;
+            animation-delay: var(--card-delay, 0s);
+        }
+
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-25px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        .quest-card:hover {
+            transform: translateY(-2px) scale(1.01);
+            border-color: rgba(50, 196, 255, 0.3);
+            background: linear-gradient(145deg, rgba(9, 14, 43, .74), rgba(3, 7, 25, .68));
+            box-shadow: 0 22px 60px rgba(0, 0, 0, .3), 0 0 35px rgba(33, 164, 255, 0.06);
+        }
+
+        .quest-card:active {
+            transform: translateY(0) scale(0.98);
+            transition: transform 0.1s ease;
+        }
+
+        .quest-left {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quest-left::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #27d1ff;
+            box-shadow: 0 0 13px rgba(39, 209, 255, 0.78);
+            animation: dotPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(39, 209, 255, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(39, 220, 255, 0.9);
+            }
+        }
+
+        .quest-title {
+            overflow: hidden;
+            color: var(--text-bright);
+            font-size: 13px;
+            font-weight: 650;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .quest-sub {
+            margin-top: 4px;
+            color: #70799a;
+            font-size: 10px;
+        }
+
+        .quest-expiry {
+            flex-shrink: 0;
+            padding: 5px 8px;
+            border: 1px solid rgba(255, 182, 83, 0.08);
+            border-radius: 7px;
+            background: rgba(255, 174, 76, 0.055);
+            color: #d9a567;
+            font-size: 9px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .quest-card:hover .quest-expiry {
+            border-color: rgba(255, 182, 83, 0.2);
+            background: rgba(255, 174, 76, 0.1);
+        }
+
+        .btn-quest {
+            flex-shrink: 0;
+            min-width: 55px;
+            height: 31px;
+            padding: 0 13px;
+            border: 0;
+            border-radius: 8px;
+            background: linear-gradient(110deg, #4254ff, #198fd7);
+            color: #fff;
+            font: inherit;
+            font-size: 10px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: all 0.25s var(--ease-out-expo);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-quest::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .btn-quest:hover::after {
+            transform: translateX(100%);
+        }
+
+        .btn-quest:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.15);
+            box-shadow: 0 8px 20px rgba(66, 130, 255, 0.3);
+        }
+
+        .btn-quest:active {
+            transform: scale(0.93);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-quest:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none;
+            filter: none;
+        }
+
+        .btn-quest.done {
+            background: #31c995;
+            color: #04150f;
+            animation: donePop 0.4s var(--ease-bounce);
+        }
+
+        @keyframes donePop {
+            0% {
+                transform: scale(0.8);
+            }
+            60% {
+                transform: scale(1.15);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Loading / empty */
+        .loading-spinner {
+            padding: 42px 20px;
+            text-align: center;
+            color: #70799a;
+            font-size: 11px;
+            animation: fadeSlideIn 0.6s ease both;
+        }
+
+        /* ---------------------------------------------------------
+           ADMIN SECTION
+           --------------------------------------------------------- */
+        .admin-stats-section {
+            margin-top: 40px;
+            padding: 25px;
+            border: 1px solid rgba(145, 160, 255, .18);
+            border-radius: var(--radius-lg);
+            background: var(--glass);
+            box-shadow: 0 30px 100px rgba(0, 0, 0, .62), 0 0 70px rgba(51, 74, 255, .08);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            animation: fadeSlideIn 0.8s var(--ease-out-expo) 0.3s both;
+        }
+
+        .admin-stats-section h2 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 750;
+            letter-spacing: -0.5px;
+        }
+
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .admin-stat-card {
+            padding: 20px;
+            border: 1px solid rgba(145, 160, 255, .18);
+            border-radius: 15px;
+            background: var(--glass);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, .42), 0 0 40px rgba(51, 74, 255, .08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            transition: transform 0.3s var(--ease-bounce), border-color 0.3s ease;
+        }
+
+        .admin-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(145, 200, 255, .3);
+        }
+
+        .admin-stat-label {
+            color: #9198ba;
+            font-size: 12px;
+            font-weight: 650;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+
+        .admin-stat-value {
+            color: #dcecff;
+            font-size: 28px;
+            font-weight: 750;
+            text-shadow: 0 0 20px rgba(0, 238, 255, 0.5);
+            animation: glowPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%,
+            100% {
+                text-shadow: 0 0 15px rgba(0, 238, 255, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(0, 238, 255, 0.8);
+            }
+        }
+
+        /* ---------------------------------------------------------
+           RESPONSIVE
+           --------------------------------------------------------- */
+        @media (max-width: 850px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content {
+                padding: 42px 28px 60px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 14px 16px;
+                border-right: 0;
+                border-bottom: 1px solid rgba(125, 143, 255, .12);
+            }
+            .sidebar-brand {
+                display: none;
+            }
+            .sidebar-header {
+                margin: 0;
+            }
+            .btn-logout {
+                position: absolute;
+                top: 15px;
+                right: 16px;
+                width: auto;
+                padding: 0 15px;
+            }
+            .main-content {
+                padding: 30px 17px 45px;
+            }
+            :root {
+                --orb-size: 170px;
+            }
+            .stat-value {
+                font-size: 24px;
+            }
+            .stat-star {
+                font-size: 30px;
+            }
+            .stat-orb::after {
+                font-size: 12px;
+                bottom: -70px;
+                padding: 8px 18px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            :root {
+                --orb-size: 140px;
+            }
+            .stat-value {
+                font-size: 18px;
+            }
+            .stat-star {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body class="dashboard-page">
-    <!-- Fond étoilé -->
-    <div class="starfield"></div>
+    <div class="starfield" id="starfield"></div>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-brand">Obistral</div>
-
             <div class="sidebar-header">
                 <img id="sidebarAvatar" src="" alt="Avatar" class="sidebar-avatar">
                 <div>
                     <div id="sidebarUsername" class="sidebar-username">Username</div>
                 </div>
             </div>
-
             <button id="logoutBtn" class="btn-logout">Logout</button>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main -->
         <div class="main-content">
             <div class="header">
                 <h1 id="greeting">Welcome!</h1>
@@ -37,11 +969,10 @@
                 </div>
             </div>
 
-            <!-- Stats Stars - Cross Layout -->
-            <div class="stats-cross">
-                <!-- Top - Done -->
-                <div class="stat-orb top" id="completedOrb" data-label="Done">
-                    <div class="orb-aura"></div>
+            <!-- Do All Orb -->
+            <div class="stats-simple">
+                <div class="stat-doall-text">Do All</div>
+                <div class="stat-orb center" id="completeAllBtn" data-label="">
                     <div class="stat-facet facet-1"></div>
                     <div class="stat-facet facet-2"></div>
                     <div class="stat-facet facet-3"></div>
@@ -51,92 +982,14 @@
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
                     <div class="stat-content">
-                        <div class="stat-label">Done</div>
-                        <div class="stat-value" id="completedQuests">0</div>
-                    </div>
-                    <div class="stat-star">★</div>
-                    <div class="stat-shine"></div>
-                </div>
-
-                <!-- Left - Progress -->
-                <div class="stat-orb left" id="progressOrb" data-label="Progress">
-                    <div class="orb-aura"></div>
-                    <div class="stat-facet facet-1"></div>
-                    <div class="stat-facet facet-2"></div>
-                    <div class="stat-facet facet-3"></div>
-                    <div class="stat-facet facet-4"></div>
-                    <div class="stat-facet facet-5"></div>
-                    <div class="stat-facet facet-6"></div>
-                    <div class="stat-facet facet-7"></div>
-                    <div class="stat-light"></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Progress</div>
-                        <div class="stat-value" id="progressPercent">0%</div>
-                    </div>
-                    <div class="stat-star">★</div>
-                    <div class="stat-shine"></div>
-                    <div class="progress-ring"></div>
-                    <div class="progress-fill"></div>
-                </div>
-
-                <!-- Center - Do All -->
-                <div class="stat-orb center" id="completeAllBtn" data-label="Do All">
-                    <div class="orb-aura"></div>
-                    <div class="stat-facet facet-1"></div>
-                    <div class="stat-facet facet-2"></div>
-                    <div class="stat-facet facet-3"></div>
-                    <div class="stat-facet facet-4"></div>
-                    <div class="stat-facet facet-5"></div>
-                    <div class="stat-facet facet-6"></div>
-                    <div class="stat-facet facet-7"></div>
-                    <div class="stat-light"></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Do All</div>
-                    </div>
-                    <div class="stat-star">★</div>
-                    <div class="stat-shine"></div>
-                </div>
-
-                <!-- Right - To do -->
-                <div class="stat-orb right" id="remainingOrb" data-label="To do">
-                    <div class="orb-aura"></div>
-                    <div class="stat-facet facet-1"></div>
-                    <div class="stat-facet facet-2"></div>
-                    <div class="stat-facet facet-3"></div>
-                    <div class="stat-facet facet-4"></div>
-                    <div class="stat-facet facet-5"></div>
-                    <div class="stat-facet facet-6"></div>
-                    <div class="stat-facet facet-7"></div>
-                    <div class="stat-light"></div>
-                    <div class="stat-content">
-                        <div class="stat-label">To do</div>
                         <div class="stat-value" id="remainingQuests">0</div>
-                    </div>
-                    <div class="stat-star">★</div>
-                    <div class="stat-shine"></div>
-                </div>
-
-                <!-- Bottom - Remaining -->
-                <div class="stat-orb bottom" id="remainingOrbBottom" data-label="Remaining">
-                    <div class="orb-aura"></div>
-                    <div class="stat-facet facet-1"></div>
-                    <div class="stat-facet facet-2"></div>
-                    <div class="stat-facet facet-3"></div>
-                    <div class="stat-facet facet-4"></div>
-                    <div class="stat-facet facet-5"></div>
-                    <div class="stat-facet facet-6"></div>
-                    <div class="stat-facet facet-7"></div>
-                    <div class="stat-light"></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Remaining</div>
-                        <div class="stat-value" id="remainingBottom">0</div>
                     </div>
                     <div class="stat-star">★</div>
                     <div class="stat-shine"></div>
                 </div>
             </div>
 
-            <!-- Quests List -->
+            <!-- Quests -->
             <div class="quests-section">
                 <h2>Active Quests</h2>
                 <div id="questsList" class="quests-list">
@@ -144,7 +997,7 @@
                 </div>
             </div>
 
-            <!-- Admin Stats Section -->
+            <!-- Admin -->
             <div id="adminStatsSection" class="admin-stats-section" style="display: none;">
                 <h2>Global Stats (Admin)</h2>
                 <div class="admin-stats-grid">
@@ -162,140 +1015,177 @@
     </div>
 
     <script>
-        // Générer les étoiles de fond
-        const starfield = document.querySelector('.starfield');
-        for (let i = 0; i < 300; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 5 + 's';
-            star.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            star.style.width = (Math.random() * 2 + 1) + 'px';
-            star.style.height = star.style.width;
-            starfield.appendChild(star);
-        }
+        // Protection contre le vol de code
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'c' || e.key === 'i' || e.key === 'j')) {
+                e.preventDefault();
+            }
+            if (e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
 
+        // Désactiver la sélection de texte
+        document.addEventListener('selectstart', e => e.preventDefault());
+        document.addEventListener('dragstart', e => e.preventDefault());
+
+        // --- STARS ---
+        (function() {
+            const sf = document.getElementById('starfield');
+            const frag = document.createDocumentFragment();
+            for (let i = 0; i < 250; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--dur', (Math.random() * 4 + 2) + 's');
+                star.style.setProperty('--delay', Math.random() * 6 + 's');
+                star.style.width = (Math.random() * 2 + 1) + 'px';
+                star.style.height = star.style.width;
+                frag.appendChild(star);
+            }
+            sf.appendChild(frag);
+        })();
+
+        // --- STATE ---
         let isAdmin = false;
+        const COOLDOWN_TIME = 16 * 60 * 1000;
+        let cooldownEnd = localStorage.getItem('questCooldown');
+        let cooldownInterval;
+        let welcomeClicks = 0;
+        let welcomeClickTimer;
 
+        const $ = (s) => document.querySelector(s);
+        const orb = $('#completeAllBtn');
+        const orbLabel = orb?.querySelector('.stat-label');
+
+        // --- LOAD USER ---
         async function loadUser() {
             try {
                 const res = await fetch('/api/user');
                 if (!res.ok) throw new Error('Unauthorized');
                 const user = await res.json();
                 isAdmin = user.isAdmin || false;
-                const avatarImg = document.getElementById('sidebarAvatar');
-                if (user.avatar) {
-                    avatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
-                    avatarImg.onerror = function() {
-                        this.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-                    };
-                } else {
-                    avatarImg.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-                }
-                document.getElementById('sidebarUsername').textContent = user.username;
-                document.getElementById('greeting').textContent = `Welcome, ${user.global_name || user.username}!${isAdmin ? ' (Admin)' : ''}`;
 
-                // Show/hide admin stats section
-                const adminStatsSection = document.getElementById('adminStatsSection');
-                if (adminStatsSection) {
-                    adminStatsSection.style.display = isAdmin ? 'block' : 'none';
-                }
+                const avatar = $('#sidebarAvatar');
+                avatar.src = user.avatar ?
+                    `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128` :
+                    'https://cdn.discordapp.com/embed/avatars/0.png';
+                avatar.onerror = () => {
+                    avatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+                };
+
+                $('#sidebarUsername').textContent = user.username;
+                $('#greeting').textContent = `Welcome, ${user.global_name || user.username}!${isAdmin ? ' (Admin)' : ''}`;
+
+                const adminSec = $('#adminStatsSection');
+                if (adminSec) adminSec.style.display = isAdmin ? 'block' : 'none';
             } catch {
                 window.location.href = '/login';
             }
         }
 
-        // 5 clicks sur Welcome pour désactiver le cooldown
-        document.getElementById('greeting').addEventListener('click', () => {
+        // --- SECRET COOLDOWN BYPASS (5 clicks on greeting) ---
+        $('#greeting').addEventListener('click', () => {
             welcomeClicks++;
             clearTimeout(welcomeClickTimer);
-            welcomeClickTimer = setTimeout(() => {
-                welcomeClicks = 0;
-            }, 2000);
-
+            welcomeClickTimer = setTimeout(() => { welcomeClicks = 0; }, 2000);
             if (welcomeClicks >= 5) {
                 welcomeClicks = 0;
-                // Désactiver le cooldown
                 clearInterval(cooldownInterval);
                 localStorage.removeItem('questCooldown');
                 cooldownEnd = null;
-                document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
-                document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
-                alert('Cooldown désactivé !');
+                orb.classList.remove('cooldown');
+                orb.style.pointerEvents = 'auto';
+                if (orbLabel) orbLabel.textContent = 'Do All';
+                // petit feedback visuel
+                orb.style.boxShadow = '0 0 30px rgba(0,255,150,0.9)';
+                setTimeout(() => { orb.style.boxShadow = ''; }, 600);
             }
         });
 
+        // --- LOAD QUESTS ---
         async function loadQuests() {
             try {
                 const res = await fetch('/api/quests');
                 const data = await res.json();
-                const total = data.total || 0;
-                const completed = data.completed || 0;
                 const remaining = data.uncompleted?.length || 0;
-                document.getElementById('completedQuests').textContent = completed;
-                document.getElementById('remainingQuests').textContent = remaining;
-                document.getElementById('remainingBottom').textContent = remaining;
-                document.getElementById('questCount').textContent = remaining;
+                $('#remainingQuests').textContent = remaining;
+                $('#questCount').textContent = remaining;
 
-                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-                document.getElementById('progressPercent').textContent = `${pct}%`;
-                document.getElementById('progressFill').style.width = `${pct}%`;
+                // pop animation on value change
+                const valEl = $('#remainingQuests');
+                valEl.style.transform = 'scale(1.3)';
+                setTimeout(() => { valEl.style.transform = 'scale(1)'; }, 200);
 
-                // Update admin stats if available
                 if (data.globalStats && isAdmin) {
-                    document.getElementById('globalTotalCompleted').textContent = data.globalStats.totalCompleted;
-                    document.getElementById('globalTotalQuests').textContent = data.globalStats.totalQuests;
+                    $('#globalTotalCompleted').textContent = data.globalStats.totalCompleted;
+                    $('#globalTotalQuests').textContent = data.globalStats.totalQuests;
                 }
 
-                const list = document.getElementById('questsList');
+                const list = $('#questsList');
                 if (!data.uncompleted || data.uncompleted.length === 0) {
-                    list.innerHTML = `<div class="loading-spinner">All done!</div>`;
-                    return;
-                }
+                    list.innerHTML = `<div class="loading-spinner">All done! ✨</div>`;
+                    // L'orbe reste cliquable même si all done
+                    orb.classList.remove('alldone');
+                    orb.classList.remove('cooldown');
+                    orb.style.pointerEvents = 'auto';
+                    if (orbLabel) orbLabel.textContent = 'Do All';
+                } else {
+                    // Réactiver l'orbe s'il y a des quêtes
+                    orb.classList.remove('alldone');
+                    // Vérifier si cooldown actif
+                    if (cooldownEnd && parseInt(cooldownEnd) > Date.now()) {
+                        orb.classList.add('cooldown');
+                        orb.style.pointerEvents = 'none';
+                        if (orbLabel) orbLabel.textContent = '';
+                    } else {
+                        orb.classList.remove('cooldown');
+                        orb.style.pointerEvents = 'auto';
+                        if (orbLabel) orbLabel.textContent = 'Do All';
+                    }
 
-                list.innerHTML = data.uncompleted.map((q) => {
-                    const expiresAt = new Date(q.config.expires_at);
-                    const timeLeft = getTimeRemaining(expiresAt);
-
-                    return `
-                        <div class="quest-card" data-id="${q.id}">
-                            <div class="quest-left">
-                                <div>
-                                    <div class="quest-title">${q.config.messages.quest_name}</div>
-                                    <div class="quest-sub">${q.config.messages.game_title}</div>
+                    list.innerHTML = data.uncompleted.map((q, index) => {
+                        const expiresAt = new Date(q.config.expires_at);
+                        const timeLeft = getTimeRemaining(expiresAt);
+                        return `
+                            <div class="quest-card" data-id="${q.id}" style="--card-delay: ${index * 0.08}s">
+                                <div class="quest-left">
+                                    <div>
+                                        <div class="quest-title">${q.config.messages.quest_name}</div>
+                                        <div class="quest-sub">${q.config.messages.game_title}</div>
+                                    </div>
+                                    <span class="quest-expiry">${timeLeft}</span>
                                 </div>
-                                <span class="quest-expiry">${timeLeft}</span>
+                                <button class="btn-quest" onclick="completeQuest('${q.id}')">Do</button>
                             </div>
-                            <button class="btn-quest" onclick="completeQuest('${q.id}')">Do</button>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
             } catch (e) {
-                console.error(e);
-                document.getElementById('questsList').innerHTML = `<div class="loading-spinner">Loading error</div>`;
+                console.error('Load quests error:', e);
+                $('#questsList').innerHTML = `<div class="loading-spinner">Loading error. Check console.</div>`;
             }
         }
 
         function getTimeRemaining(expiresAt) {
             const now = new Date();
             const diff = expiresAt - now;
-
             if (diff <= 0) return 'Expiré';
-
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
             if (days > 0) return `${days}d ${hours}h`;
             if (hours > 0) return `${hours}h ${minutes}m`;
             return `${minutes}m`;
         }
 
+        // --- COMPLETE SINGLE QUEST ---
         async function completeQuest(id) {
             const card = document.querySelector(`.quest-card[data-id="${id}"]`);
             const btn = card?.querySelector('.btn-quest');
-            if (!btn) return;
+            if (!btn || btn.disabled) return;
             btn.disabled = true;
             btn.textContent = '...';
             try {
@@ -303,98 +1193,113 @@
                 if (res.ok) {
                     btn.textContent = 'Done';
                     btn.classList.add('done');
+                    // petit shake sur la carte
+                    card.style.transform = 'translateX(3px)';
+                    setTimeout(() => { card.style.transform = ''; }, 150);
                     setTimeout(loadQuests, 800);
                 } else {
                     btn.textContent = 'Error';
-                    setTimeout(() => { btn.disabled = false; btn.textContent = 'Do'; }, 1500);
+                    btn.style.background = '#ff4455';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Do';
+                        btn.style.background = '';
+                    }, 1500);
                 }
-            } catch {
+            } catch (e) {
+                console.error('Quest completion error:', e);
                 btn.textContent = 'Error';
-                setTimeout(() => { btn.disabled = false; btn.textContent = 'Do'; }, 1500);
+                btn.style.background = '#ff4455';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Do';
+                    btn.style.background = '';
+                }, 1500);
             }
         }
 
-        // Cooldown de 16 minutes (15 min pour la quête + 1 min de marge)
-        const COOLDOWN_TIME = 16 * 60 * 1000; // 16 minutes en millisecondes
-        let cooldownEnd = localStorage.getItem('questCooldown');
-        let cooldownInterval;
-        let welcomeClicks = 0;
-        let welcomeClickTimer;
-
+        // --- COOLDOWN LOGIC ---
         function updateCooldown() {
             const now = Date.now();
             const remaining = cooldownEnd - now;
-
             if (remaining <= 0) {
                 clearInterval(cooldownInterval);
                 localStorage.removeItem('questCooldown');
-                document.getElementById('completeAllBtn').style.pointerEvents = 'auto';
-                document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
+                orb.classList.remove('cooldown');
+                orb.style.pointerEvents = 'auto';
+                if (orbLabel) orbLabel.textContent = 'Do All';
                 return;
             }
-
             const minutes = Math.floor(remaining / 60000);
             const seconds = Math.floor((remaining % 60000) / 1000);
-            document.querySelector('.stat-orb.center .stat-label').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            if (orbLabel) orbLabel.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
         function startCooldown() {
             cooldownEnd = Date.now() + COOLDOWN_TIME;
             localStorage.setItem('questCooldown', cooldownEnd);
-
-            document.getElementById('completeAllBtn').style.pointerEvents = 'none';
-
+            orb.classList.add('cooldown');
+            orb.style.pointerEvents = 'none';
             cooldownInterval = setInterval(updateCooldown, 1000);
             updateCooldown();
         }
 
-        // Vérifier si un cooldown est en cours au chargement
         if (cooldownEnd && parseInt(cooldownEnd) > Date.now()) {
-            document.getElementById('completeAllBtn').style.pointerEvents = 'none';
+            orb.classList.add('cooldown');
+            orb.style.pointerEvents = 'none';
             cooldownInterval = setInterval(updateCooldown, 1000);
             updateCooldown();
         }
 
+        // --- COMPLETE ALL ---
         async function completeAll() {
-            const btn = document.getElementById('completeAllBtn');
-            btn.style.pointerEvents = 'none';
-            document.querySelector('.stat-orb.center .stat-label').textContent = 'Processing...';
+            if (orb.classList.contains('cooldown') || orb.classList.contains('alldone')) return;
+            orb.style.pointerEvents = 'none';
+            if (orbLabel) orbLabel.textContent = '...';
+
+            // petit effet de "charge"
+            orb.style.transition = 'box-shadow 0.3s ease';
+            orb.style.boxShadow = '0 0 40px rgba(255,255,255,0.6)';
 
             try {
                 const res = await fetch('/api/quests/complete-all', { method: 'POST' });
                 if (res.ok) {
+                    orb.style.boxShadow = '0 0 50px rgba(0,255,150,0.8)';
+                    setTimeout(() => { orb.style.boxShadow = ''; }, 500);
                     startCooldown();
                     setTimeout(loadQuests, 1000);
                 } else {
-                    btn.style.pointerEvents = 'auto';
-                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
+                    orb.style.pointerEvents = 'auto';
+                    orb.style.boxShadow = '0 0 40px rgba(255,50,50,0.7)';
+                    if (orbLabel) orbLabel.textContent = 'Error';
                     setTimeout(() => {
-                        document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
+                        orb.style.boxShadow = '';
+                        if (orbLabel && !orb.classList.contains('cooldown') && !orb.classList.contains('alldone')) orbLabel.textContent = 'Do All';
                     }, 2000);
                 }
             } catch {
-                btn.style.pointerEvents = 'auto';
-                document.querySelector('.stat-orb.center .stat-label').textContent = 'Error';
+                orb.style.pointerEvents = 'auto';
+                orb.style.boxShadow = '0 0 40px rgba(255,50,50,0.7)';
+                if (orbLabel) orbLabel.textContent = 'Error';
                 setTimeout(() => {
-                    document.querySelector('.stat-orb.center .stat-label').textContent = 'Do All';
+                    orb.style.boxShadow = '';
+                    if (orbLabel && !orb.classList.contains('cooldown') && !orb.classList.contains('alldone')) orbLabel.textContent = 'Do All';
                 }, 2000);
             }
         }
 
-        document.getElementById('completeAllBtn').addEventListener('click', completeAll);
+        orb.addEventListener('click', completeAll);
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // --- LOGOUT ---
+        $('#logoutBtn').addEventListener('click', async () => {
             await fetch('/logout', { method: 'POST' });
             window.location.href = '/login';
         });
 
+        // --- INIT ---
         loadUser();
         loadQuests();
-
-        // Ne rafraîchir les données que toutes les 30 secondes
-        setInterval(() => {
-            loadQuests();
-        }, 30000);
+        setInterval(loadQuests, 30000);
     </script>
 </body>
 </html>

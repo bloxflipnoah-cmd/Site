@@ -1,0 +1,17 @@
+node_modules/
+.env
+*.log
+.DS_Store
+RAILWAY_SETUP.md
+bot/
+public/login_embedded.txt
+public/dashboard_embedded.txt
+*.key
+*.pem
+config.json
+secrets/
+credentials/
+.env.local
+.env.production
+*.backup
+src/
