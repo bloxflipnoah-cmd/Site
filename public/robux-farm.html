@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obistral · Robux Farm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100vh;
+            background: #02030a;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 72% 28%, rgba(48, 70, 255, .16), transparent 30%),
+                radial-gradient(circle at 22% 72%, rgba(0, 220, 255, .08), transparent 28%),
+                linear-gradient(180deg, rgba(1, 2, 10, .30), rgba(1, 2, 10, .86));
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            color: #70799a;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-container {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            color: #70799a;
+            font-size: 0.9rem;
+        }
+
+        .ads-section {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .ad-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .watch-btn {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .watch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .watch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer-display {
+            text-align: center;
+            color: #70799a;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .withdraw-section {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .withdraw-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .withdraw-header h2 {
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .withdraw-toggle-btn {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            color: #00d4ff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .withdraw-toggle-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+        }
+
+        .withdraw-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: #70799a;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(120, 140, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        .withdraw-submit-btn {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .withdraw-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .admin-withdrawals {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .admin-withdrawals h2 {
+            font-size: 1.2rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .withdrawals-list {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .withdrawal-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(120, 140, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .withdrawal-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .withdrawal-username {
+            color: white;
+            font-weight: bold;
+        }
+
+        .withdrawal-details {
+            color: #70799a;
+            font-size: 0.85rem;
+        }
+
+        .withdrawal-status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-approved {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-rejected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .withdrawal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .approve-btn {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .approve-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .reject-btn {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .reject-btn:hover {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Obistral · Robux Farm</div>
+            <button class="back-btn" onclick="goBack()">← Back</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Ads Watched</div>
+                <div class="stat-value" id="adsWatched">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Robux Earned</div>
+                <div class="stat-value" id="robuxEarned">0</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <h2>Progress to 200 Robux</h2>
+                <div class="stat-value" id="targetProgress">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="currentRobux">0</span> / 200 Robux
+            </div>
+        </div>
+
+        <div class="ads-section">
+            <button class="watch-btn" id="watchBtn" onclick="watchAd()">Click to earn robux</button>
+            <div class="timer-display" id="timerDisplay" style="display: none;">
+                Wait <span id="timerCount">10</span>s before next click
+            </div>
+        </div>
+
+        <!-- Withdraw Section (Admin Only) -->
+        <div class="withdraw-section" id="withdrawSection" style="display: none;">
+            <div class="withdraw-header">
+                <h2>Withdraw Robux</h2>
+                <button class="withdraw-toggle-btn" onclick="toggleWithdrawForm()">Request Withdraw</button>
+            </div>
+
+            <!-- Withdraw Form -->
+            <div class="withdraw-form" id="withdrawForm" style="display: none;">
+                <div class="form-group">
+                    <label>PSD (Password)</label>
+                    <input type="text" id="psdInput" placeholder="Enter your PSD">
+                </div>
+                <div class="form-group">
+                    <label>Gamepass ID (200 Robux)</label>
+                    <input type="text" id="gamepassInput" placeholder="Enter gamepass ID">
+                </div>
+                <div class="form-group">
+                    <label>Amount (Min: 200 Robux)</label>
+                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="200" step="1">
+                </div>
+                <button class="withdraw-submit-btn" onclick="submitWithdraw()">Submit Withdraw</button>
+            </div>
+        </div>
+
+        <!-- Admin Withdrawals View -->
+        <div class="admin-withdrawals" id="adminWithdrawals" style="display: none;">
+            <h2>Withdrawals (Admin)</h2>
+            <button class="refresh-btn" onclick="loadWithdrawals()">Refresh</button>
+            <div class="withdrawals-list" id="withdrawalsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const CPM = 0.50; // € per 1000 views
+        const ROBUX_PRICE = 0.89; // € for 200 Robux
+        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~224.72 Robux per €
+        const VIEWS_PER_ROBUX = (1 / ROBUX_PER_EURO) * 1000 / CPM; // ~9 views per Robux
+
+        // State
+        let adsWatched = 0;
+        let earnings = 0;
+        let robuxEarned = 0;
+
+        // Load data from server
+        async function loadRobuxFarmData() {
+            try {
+                const res = await fetch('/api/robux-farm/data');
+                const data = await res.json();
+                if (data.success && data.data) {
+                    adsWatched = data.data.adsWatched || 0;
+                    earnings = data.data.earnings || 0;
+                    robuxEarned = data.data.robuxEarned || 0;
+                    updateDisplay();
+                }
+            } catch (e) {
+                console.error('Load robux farm data error:', e);
+            }
+        }
+
+        // Save data to server
+        async function saveRobuxFarmData() {
+            try {
+                await fetch('/api/robux-farm/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adsWatched, earnings, robuxEarned })
+                });
+            } catch (e) {
+                console.error('Save robux farm data error:', e);
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('adsWatched').textContent = adsWatched.toLocaleString();
+            document.getElementById('robuxEarned').textContent = robuxEarned.toFixed(2);
+
+            const targetRobux = 200;
+            const progress = (robuxEarned / targetRobux) * 100;
+            document.getElementById('targetProgress').textContent = `${progress.toFixed(2)}%`;
+            document.getElementById('progressFill').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('currentRobux').textContent = robuxEarned.toFixed(2);
+        }
+
+        // Watch ad
+        let isTimerActive = false;
+        const TIMER_SECONDS = 10;
+
+        function watchAd() {
+            if (isTimerActive) return;
+
+            adsWatched++;
+            earnings = (adsWatched / 1000) * CPM;
+            robuxEarned = earnings * ROBUX_PER_EURO;
+
+            updateDisplay();
+            saveRobuxFarmData();
+
+            // Start timer
+            isTimerActive = true;
+            const btn = document.getElementById('watchBtn');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerCount = document.getElementById('timerCount');
+
+            btn.disabled = true;
+            btn.style.display = 'none';
+            timerDisplay.style.display = 'block';
+
+            let timeLeft = TIMER_SECONDS;
+            timerCount.textContent = timeLeft;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                timerCount.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    isTimerActive = false;
+                    btn.disabled = false;
+                    btn.style.display = 'block';
+                    timerDisplay.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        // Go back
+        function goBack() {
+            window.location.href = '/mode-selection';
+        }
+
+        // Check if user is admin
+        async function checkAdminStatus() {
+            try {
+                const res = await fetch('/api/user/admin-status');
+                const data = await res.json();
+                if (data.isAdmin) {
+                    document.getElementById('withdrawSection').style.display = 'block';
+                    document.getElementById('adminWithdrawals').style.display = 'block';
+                    loadWithdrawals();
+                }
+            } catch (e) {
+                console.error('Admin status check error:', e);
+            }
+        }
+
+        // Toggle withdraw form
+        function toggleWithdrawForm() {
+            const form = document.getElementById('withdrawForm');
+            form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        // Submit withdraw
+        async function submitWithdraw() {
+            const psd = document.getElementById('psdInput').value;
+            const gamepassId = document.getElementById('gamepassInput').value;
+            const robuxAmount = parseFloat(document.getElementById('robuxAmountInput').value);
+
+            if (!psd || !gamepassId || !robuxAmount) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (robuxAmount < 200) {
+                alert('Minimum withdrawal is 200 Robux');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/withdrawals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ psd, gamepassId, robuxAmount })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('Withdrawal request submitted successfully!');
+                    document.getElementById('psdInput').value = '';
+                    document.getElementById('gamepassInput').value = '';
+                    document.getElementById('robuxAmountInput').value = '';
+                    toggleWithdrawForm();
+                    updateDisplay();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                console.error('Withdraw error:', e);
+                alert('Failed to submit withdrawal');
+            }
+        }
+
+        // Load withdrawals (admin)
+        async function loadWithdrawals() {
+            try {
+                const res = await fetch('/api/withdrawals');
+                const data = await res.json();
+
+                if (data.success) {
+                    displayWithdrawals(data.withdrawals);
+                }
+            } catch (e) {
+                console.error('Load withdrawals error:', e);
+            }
+        }
+
+        // Display withdrawals
+        function displayWithdrawals(withdrawals) {
+            const list = document.getElementById('withdrawalsList');
+            list.innerHTML = '';
+
+            withdrawals.forEach(withdrawal => {
+                const date = new Date(withdrawal.createdAt).toLocaleString();
+                const statusClass = `status-${withdrawal.status}`;
+
+                const item = document.createElement('div');
+                item.className = 'withdrawal-item';
+                item.innerHTML = `
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-username">${withdrawal.username}</div>
+                        <div class="withdrawal-details">${withdrawal.robuxAmount} Robux • ${date}</div>
+                        <div class="withdrawal-details">PSD: ${withdrawal.psd} • Gamepass: ${withdrawal.gamepassId}</div>
+                    </div>
+                    <div class="withdrawal-actions">
+                        <span class="withdrawal-status ${statusClass}">${withdrawal.status}</span>
+                        ${withdrawal.status === 'pending' ? `
+                            <button class="action-btn approve-btn" onclick="updateWithdrawalStatus('${withdrawal.id}', 'approved')">Approve</button>
+                            <button class="action-btn reject-btn" onclick="updateWithdrawalStatus('${withdrawal.id}', 'rejected')">Reject</button>
+                        ` : ''}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Update withdrawal status (admin)
+        async function updateWithdrawalStatus(withdrawalId, status) {
+            try {
+                const res = await fetch('/api/withdrawals/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ withdrawalId, status })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    loadWithdrawals();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                console.error('Update withdrawal status error:', e);
+                alert('Failed to update withdrawal status');
+            }
+        }
+
+        // Initialize
+        loadRobuxFarmData();
+        checkAdminStatus();
+    </script>
+</body>
+</html>

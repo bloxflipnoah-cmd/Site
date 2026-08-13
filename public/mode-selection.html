@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obistral · Mode Selection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100vh;
+            background: #02030a;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 72% 28%, rgba(48, 70, 255, .16), transparent 30%),
+                radial-gradient(circle at 22% 72%, rgba(0, 220, 255, .08), transparent 28%),
+                linear-gradient(180deg, rgba(1, 2, 10, .30), rgba(1, 2, 10, .86));
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #70799a;
+            margin-bottom: 50px;
+        }
+
+        .modes-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 20px;
+            padding: 40px;
+            width: 300px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-card:hover {
+            transform: translateY(-10px);
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .mode-icon {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .orb {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-bounce);
+        }
+
+        .orb:hover {
+            transform: scale(1.05);
+        }
+
+        /* Facets for Auto Quest orb */
+        .facet-1 {
+            position: absolute;
+            width: 80px;
+            height: 90px;
+            left: 12px;
+            top: 15px;
+            background: linear-gradient(135deg, #00e8ff, #164cff 40%, #2529c9);
+            clip-path: polygon(45% 0, 100% 35%, 76% 100%, 10% 72%, 0 25%);
+            opacity: .7;
+        }
+        .facet-2 {
+            position: absolute;
+            width: 50px;
+            height: 100px;
+            left: 4px;
+            top: 50px;
+            background: linear-gradient(180deg, #ff00d4, #a700ff 45%, #006fff);
+            clip-path: polygon(45% 0, 100% 35%, 76% 100%, 10% 72%, 0 25%);
+            opacity: .7;
+        }
+        .facet-3 {
+            position: absolute;
+            width: 100px;
+            height: 75px;
+            left: 40px;
+            top: -5px;
+            background: linear-gradient(135deg, #00e8ff, #164cff 40%, #2529c9);
+            clip-path: polygon(20% 0, 70% 10%, 100% 55%, 56% 100%, 0 62%);
+            opacity: .65;
+        }
+        .facet-4 {
+            position: absolute;
+            width: 75px;
+            height: 100px;
+            right: -3px;
+            top: 12px;
+            background: linear-gradient(135deg, #6428ff, #ff31db, #813eff);
+            clip-path: polygon(20% 0, 100% 22%, 85% 72%, 48% 100%, 0 70%, 35% 38%);
+            opacity: .72;
+        }
+        .facet-5 {
+            position: absolute;
+            width: 75px;
+            height: 85px;
+            right: -10px;
+            top: 60px;
+            background: linear-gradient(160deg, #00dfff, #0645ff 45%, #531dff);
+            clip-path: polygon(35% 0, 100% 25%, 90% 75%, 50% 100%, 0 55%);
+            opacity: .6;
+        }
+        .facet-6 {
+            position: absolute;
+            width: 115px;
+            height: 60px;
+            left: 30px;
+            bottom: -6px;
+            background: linear-gradient(90deg, #00e8d5, #006aff, #b830ff);
+            clip-path: polygon(0 35%, 35% 0, 75% 18%, 100% 62%, 65% 100%, 22% 82%);
+            opacity: .72;
+        }
+        .facet-7 {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            right: 15px;
+            bottom: 4px;
+            background: linear-gradient(135deg, #ff2bd6, #7632ff, #00eaff);
+            clip-path: polygon(10% 20%, 62% 0, 100% 50%, 55% 100%, 0 72%);
+            opacity: .55;
+        }
+
+        /* Green facets for Robux Farm orb */
+        .robux-farm .facet-1 {
+            background: linear-gradient(135deg, #00ff88, #00cc66 40%, #009944);
+        }
+        .robux-farm .facet-2 {
+            background: linear-gradient(180deg, #88ff00, #00cc66 45%, #00ff88);
+        }
+        .robux-farm .facet-3 {
+            background: linear-gradient(135deg, #00ff88, #00cc66 40%, #009944);
+        }
+        .robux-farm .facet-4 {
+            background: linear-gradient(135deg, #00cc66, #88ff00, #00ff88);
+        }
+        .robux-farm .facet-5 {
+            background: linear-gradient(160deg, #00ffaa, #00cc66 45%, #009944);
+        }
+        .robux-farm .facet-6 {
+            background: linear-gradient(90deg, #00ff88, #00cc66, #88ff00);
+        }
+        .robux-farm .facet-7 {
+            background: linear-gradient(135deg, #88ff00, #00cc66, #00ff88);
+        }
+
+        .robux-farm .stat-light {
+            background: radial-gradient(circle, rgba(0, 255, 136, .2) 0%, rgba(0, 200, 100, .08) 35%, transparent 70%);
+        }
+
+        .robux-farm .orb:hover .stat-light {
+            background: radial-gradient(circle, rgba(0, 255, 136, .35) 0%, rgba(0, 220, 120, .15) 35%, transparent 70%);
+        }
+
+        .robux-farm .orb::before {
+            background: conic-gradient(from 20deg, #00ff88, #00cc66, #88ff00, #00ffaa, #00ff88, #00ff88);
+        }
+
+        .robux-farm .stat-star {
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 12px #88ff88, 0 0 20px #00cc66;
+        }
+
+        .robux-farm .orb:hover .stat-star {
+            text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #aaffaa, 0 0 35px #00dd66;
+        }
+
+        .stat-light {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            left: 50%;
+            top: 47%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(53, 111, 255, .2) 0%, rgba(0, 125, 255, .08) 35%, transparent 70%);
+            filter: blur(12px);
+            z-index: 4;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .orb:hover .stat-light {
+            background: radial-gradient(circle, rgba(53, 150, 255, .35) 0%, rgba(0, 180, 255, .15) 35%, transparent 70%);
+            filter: blur(18px);
+        }
+
+        .stat-star {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%) rotate(8deg);
+            z-index: 6;
+            font-size: 30px;
+            line-height: 1;
+            color: rgba(255, 255, 255, .9);
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 12px #9fc8ff, 0 0 20px #386dff;
+            pointer-events: none;
+            filter: blur(.1px);
+            transition: text-shadow 0.4s ease;
+        }
+
+        .orb:hover .stat-star {
+            text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #b0d4ff, 0 0 35px #5a90ff;
+        }
+
+        .stat-shine {
+            position: absolute;
+            width: 55px;
+            height: 28px;
+            top: 12px;
+            left: 25px;
+            border-radius: 50%;
+            background: linear-gradient(120deg, rgba(255, 255, 255, .18), transparent);
+            filter: blur(8px);
+            transform: rotate(-25deg);
+            z-index: 15;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .orb:hover .stat-shine {
+            width: 70px;
+            top: 8px;
+            left: 15px;
+            background: linear-gradient(120deg, rgba(255, 255, 255, .28), transparent);
+        }
+
+        /* Border glow */
+        .orb::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: conic-gradient(from 20deg, #00ffe1, #0077ff, #ff1bd8, #7534ff, #00d9ff, #00ffe1);
+            -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            padding: 4px;
+            z-index: 20;
+            pointer-events: none;
+            opacity: .85;
+            transition: opacity 0.4s ease, padding 0.4s ease;
+            border-radius: 50%;
+        }
+
+        .orb:hover::before {
+            opacity: 1;
+            padding: 3px;
+        }
+
+        .robux-symbol {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .mode-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .mode-description {
+            color: #70799a;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .modes-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mode-card {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Obistral</h1>
+        <p class="subtitle">Choose your mode</p>
+
+        <div class="modes-container">
+            <div class="mode-card auto-quest" onclick="selectMode('autoquest')">
+                <div class="mode-icon">
+                    <div class="orb">
+                        <div class="facet-1"></div>
+                        <div class="facet-2"></div>
+                        <div class="facet-3"></div>
+                        <div class="facet-4"></div>
+                        <div class="facet-5"></div>
+                        <div class="facet-6"></div>
+                        <div class="facet-7"></div>
+                        <div class="stat-light"></div>
+                        <div class="stat-star">★</div>
+                        <div class="stat-shine"></div>
+                    </div>
+                </div>
+                <div class="mode-title">Auto Quest</div>
+                <div class="mode-description">
+                    Complete quests automatically with one click. Fast and efficient quest farming.
+                </div>
+            </div>
+
+            <div class="mode-card robux-farm" onclick="selectMode('robuxfarm')">
+                <div class="mode-icon">
+                    <div class="orb">
+                        <div class="facet-1"></div>
+                        <div class="facet-2"></div>
+                        <div class="facet-3"></div>
+                        <div class="facet-4"></div>
+                        <div class="facet-5"></div>
+                        <div class="facet-6"></div>
+                        <div class="facet-7"></div>
+                        <div class="stat-light"></div>
+                        <div class="stat-star">★</div>
+                        <div class="stat-shine"></div>
+                        <div class="robux-symbol">R$</div>
+                    </div>
+                </div>
+                <div class="mode-title">Robux Farm</div>
+                <div class="mode-description">
+                    Watch ads to earn Robux. Generate revenue by viewing advertisements.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectMode(mode) {
+            if (mode === 'autoquest') {
+                window.location.href = '/dashboard?from=selection';
+            } else if (mode === 'robuxfarm') {
+                window.location.href = '/robux-farm?from=selection';
+            }
+        }
+    </script>
+</body>
+</html>
