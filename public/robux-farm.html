@@ -481,9 +481,10 @@
     <script>
         // Constants
         const CPM = 0.50; // € per 1000 views
-        const ROBUX_PRICE = 0.89; // € for 200 Robux
-        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~224.72 Robux per €
-        const VIEWS_PER_ROBUX = (1 / ROBUX_PER_EURO) * 1000 / CPM; // ~9 views per Robux
+        const ROBUX_PRICE = 1.50; // € for 200 Robux
+        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
+        // 50% profit margin: 30 views per Robux (6000 views for 200 Robux)
+        const VIEWS_PER_ROBUX = 30;
 
         // State
         let adsWatched = 0;
