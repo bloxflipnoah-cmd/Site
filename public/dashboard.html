@@ -927,6 +927,24 @@
             }
         }
 
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .quest-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 400px) {
             :root {
                 --orb-size: 140px;
@@ -938,10 +956,105 @@
                 font-size: 24px;
             }
         }
+
+        /* ---------------------------------------------------------
+           ADVERTISEMENT PLACEMENTS
+           --------------------------------------------------------- */
+        .ad-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .ad-banner {
+            width: 728px;
+            height: 90px;
+            max-width: 100%;
+        }
+
+        .ad-square {
+            width: 300px;
+            height: 250px;
+            max-width: 100%;
+        }
+
+        .ad-skyscraper {
+            width: 160px;
+            height: 600px;
+        }
+
+        .ad-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(62, 104, 255, 0.2), rgba(23, 200, 242, 0.2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .ad-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(2, 3, 10, 0.95);
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ad-sidebar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 999;
+        }
+
+        .ad-bottom {
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .ad-sidebar {
+                display: none;
+            }
+            .ad-banner {
+                height: 50px;
+            }
+            .ad-top {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="dashboard-page">
     <div class="starfield" id="starfield"></div>
+
+    <!-- Publicité en haut -->
+    <div class="ad-top">
+        <div class="ad-container ad-banner">
+            <div class="ad-placeholder">Espace Publicitaire (728x90)</div>
+        </div>
+    </div>
+
+    <!-- Publicité sidebar droite -->
+    <div class="ad-sidebar">
+        <div class="ad-container ad-skyscraper">
+            <div class="ad-placeholder">Espace Publicitaire (160x600)</div>
+        </div>
+    </div>
 
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -1009,6 +1122,13 @@
                         <div class="admin-stat-label">Total Quests Available</div>
                         <div class="admin-stat-value" id="globalTotalQuests">0</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Publicité en bas -->
+            <div class="ad-bottom">
+                <div class="ad-container ad-square">
+                    <div class="ad-placeholder">Espace Publicitaire (300x250)</div>
                 </div>
             </div>
         </div>
