@@ -643,7 +643,6 @@ const server = http.createServer(async (req, res) => {
                 'Session created, redirecting to dashboard'
             );
 
-
             res.setHeader(
                 'Set-Cookie',
                 `session_id=${newSessionId}; Path=/; HttpOnly`
