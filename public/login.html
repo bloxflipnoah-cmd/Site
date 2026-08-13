@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="monetag" content="11a237c061b1a8dbc7ae68534143311e">
   <title>Obistral</title>
   <style>
     /* =========================================================
@@ -1057,17 +1056,6 @@
 </head>
 
 <body>
-
-  <!-- Monetag Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(function(registration) {
-        console.log('Service Worker registered with scope:', registration.scope);
-      }).catch(function(error) {
-        console.log('Service Worker registration failed:', error);
-      });
-    }
-  </script>
 
   <!-- Fond étoilé -->
   <div class="starfield"></div>
