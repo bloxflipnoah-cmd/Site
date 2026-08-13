@@ -1076,12 +1076,6 @@
             <div class="header">
                 <h1 id="greeting">Welcome!</h1>
                 <p class="header-sub">Manage your quests in one click</p>
-                <div class="header-stats">
-                    <div class="header-stat">
-                        <span class="stat-label">Remaining</span>
-                        <span id="questCount" class="stat-value">0</span>
-                    </div>
-                </div>
             </div>
 
             <!-- Do All Orb -->
@@ -1096,19 +1090,8 @@
                     <div class="stat-facet facet-6"></div>
                     <div class="stat-facet facet-7"></div>
                     <div class="stat-light"></div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="remainingQuests">0</div>
-                    </div>
                     <div class="stat-star">★</div>
                     <div class="stat-shine"></div>
-                </div>
-            </div>
-
-            <!-- Quests -->
-            <div class="quests-section">
-                <h2>Active Quests</h2>
-                <div id="questsList" class="quests-list">
-                    <div class="loading-spinner">Loading...</div>
                 </div>
             </div>
 
@@ -1232,111 +1215,22 @@
             try {
                 const res = await fetch('/api/quests');
                 const data = await res.json();
-                const remaining = data.uncompleted?.length || 0;
-                $('#remainingQuests').textContent = remaining;
-                $('#questCount').textContent = remaining;
-
-                // pop animation on value change
-                const valEl = $('#remainingQuests');
-                valEl.style.transform = 'scale(1.3)';
-                setTimeout(() => { valEl.style.transform = 'scale(1)'; }, 200);
 
                 if (data.globalStats && isAdmin) {
                     $('#globalTotalCompleted').textContent = data.globalStats.totalCompleted;
                     $('#globalTotalQuests').textContent = data.globalStats.totalQuests;
                 }
 
-                const list = $('#questsList');
-                if (!data.uncompleted || data.uncompleted.length === 0) {
-                    list.innerHTML = `<div class="loading-spinner">All done! ✨</div>`;
-                    // L'orbe reste cliquable même si all done
-                    orb.classList.remove('alldone');
+                // Vérifier si cooldown actif
+                if (cooldownEnd && parseInt(cooldownEnd) > Date.now()) {
+                    orb.classList.add('cooldown');
+                    orb.style.pointerEvents = 'none';
+                } else {
                     orb.classList.remove('cooldown');
                     orb.style.pointerEvents = 'auto';
-                    if (orbLabel) orbLabel.textContent = 'Do All';
-                } else {
-                    // Réactiver l'orbe s'il y a des quêtes
-                    orb.classList.remove('alldone');
-                    // Vérifier si cooldown actif
-                    if (cooldownEnd && parseInt(cooldownEnd) > Date.now()) {
-                        orb.classList.add('cooldown');
-                        orb.style.pointerEvents = 'none';
-                        if (orbLabel) orbLabel.textContent = '';
-                    } else {
-                        orb.classList.remove('cooldown');
-                        orb.style.pointerEvents = 'auto';
-                        if (orbLabel) orbLabel.textContent = 'Do All';
-                    }
-
-                    list.innerHTML = data.uncompleted.map((q, index) => {
-                        const expiresAt = new Date(q.config.expires_at);
-                        const timeLeft = getTimeRemaining(expiresAt);
-                        return `
-                            <div class="quest-card" data-id="${q.id}" style="--card-delay: ${index * 0.08}s">
-                                <div class="quest-left">
-                                    <div>
-                                        <div class="quest-title">${q.config.messages.quest_name}</div>
-                                        <div class="quest-sub">${q.config.messages.game_title}</div>
-                                    </div>
-                                    <span class="quest-expiry">${timeLeft}</span>
-                                </div>
-                                <button class="btn-quest" onclick="completeQuest('${q.id}')">Do</button>
-                            </div>
-                        `;
-                    }).join('');
                 }
             } catch (e) {
                 console.error('Load quests error:', e);
-                $('#questsList').innerHTML = `<div class="loading-spinner">Loading error. Check console.</div>`;
-            }
-        }
-
-        function getTimeRemaining(expiresAt) {
-            const now = new Date();
-            const diff = expiresAt - now;
-            if (diff <= 0) return 'Expiré';
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            if (days > 0) return `${days}d ${hours}h`;
-            if (hours > 0) return `${hours}h ${minutes}m`;
-            return `${minutes}m`;
-        }
-
-        // --- COMPLETE SINGLE QUEST ---
-        async function completeQuest(id) {
-            const card = document.querySelector(`.quest-card[data-id="${id}"]`);
-            const btn = card?.querySelector('.btn-quest');
-            if (!btn || btn.disabled) return;
-            btn.disabled = true;
-            btn.textContent = '...';
-            try {
-                const res = await fetch(`/api/quest/${id}/complete`, { method: 'POST' });
-                if (res.ok) {
-                    btn.textContent = 'Done';
-                    btn.classList.add('done');
-                    // petit shake sur la carte
-                    card.style.transform = 'translateX(3px)';
-                    setTimeout(() => { card.style.transform = ''; }, 150);
-                    setTimeout(loadQuests, 800);
-                } else {
-                    btn.textContent = 'Error';
-                    btn.style.background = '#ff4455';
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.textContent = 'Do';
-                        btn.style.background = '';
-                    }, 1500);
-                }
-            } catch (e) {
-                console.error('Quest completion error:', e);
-                btn.textContent = 'Error';
-                btn.style.background = '#ff4455';
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.textContent = 'Do';
-                    btn.style.background = '';
-                }, 1500);
             }
         }
 
@@ -1349,12 +1243,10 @@
                 localStorage.removeItem('questCooldown');
                 orb.classList.remove('cooldown');
                 orb.style.pointerEvents = 'auto';
-                if (orbLabel) orbLabel.textContent = 'Do All';
                 return;
             }
             const minutes = Math.floor(remaining / 60000);
             const seconds = Math.floor((remaining % 60000) / 1000);
-            if (orbLabel) orbLabel.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
         function startCooldown() {
@@ -1375,38 +1267,19 @@
 
         // --- COMPLETE ALL ---
         async function completeAll() {
-            if (orb.classList.contains('cooldown') || orb.classList.contains('alldone')) return;
+            if (orb.classList.contains('cooldown')) return;
             orb.style.pointerEvents = 'none';
-            if (orbLabel) orbLabel.textContent = '...';
-
-            // petit effet de "charge"
-            orb.style.transition = 'box-shadow 0.3s ease';
-            orb.style.boxShadow = '0 0 40px rgba(255,255,255,0.6)';
 
             try {
                 const res = await fetch('/api/quests/complete-all', { method: 'POST' });
                 if (res.ok) {
-                    orb.style.boxShadow = '0 0 50px rgba(0,255,150,0.8)';
-                    setTimeout(() => { orb.style.boxShadow = ''; }, 500);
                     startCooldown();
                     setTimeout(loadQuests, 1000);
                 } else {
                     orb.style.pointerEvents = 'auto';
-                    orb.style.boxShadow = '0 0 40px rgba(255,50,50,0.7)';
-                    if (orbLabel) orbLabel.textContent = 'Error';
-                    setTimeout(() => {
-                        orb.style.boxShadow = '';
-                        if (orbLabel && !orb.classList.contains('cooldown') && !orb.classList.contains('alldone')) orbLabel.textContent = 'Do All';
-                    }, 2000);
                 }
             } catch {
                 orb.style.pointerEvents = 'auto';
-                orb.style.boxShadow = '0 0 40px rgba(255,50,50,0.7)';
-                if (orbLabel) orbLabel.textContent = 'Error';
-                setTimeout(() => {
-                    orb.style.boxShadow = '';
-                    if (orbLabel && !orb.classList.contains('cooldown') && !orb.classList.contains('alldone')) orbLabel.textContent = 'Do All';
-                }, 2000);
             }
         }
 
