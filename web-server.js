@@ -81,7 +81,7 @@ function createSQLiteTables() {
 
     db.exec(`
         CREATE TABLE IF NOT EXISTS robux_farm_data (
-            userToken TEXT PRIMARY KEY,
+            userId TEXT PRIMARY KEY,
             adsWatched INTEGER DEFAULT 0,
             earnings REAL DEFAULT 0,
             robuxEarned REAL DEFAULT 0,
@@ -121,7 +121,7 @@ async function createPostgreSQLTables() {
 
         await client.query(`
             CREATE TABLE IF NOT EXISTS robux_farm_data (
-                userToken TEXT PRIMARY KEY,
+                userId TEXT PRIMARY KEY,
                 adsWatched INTEGER DEFAULT 0,
                 earnings REAL DEFAULT 0,
                 robuxEarned REAL DEFAULT 0,
@@ -263,14 +263,14 @@ async function deleteSession(sessionId) {
 // ROBUX FARM DATA STORAGE (POSTGRESQL + SQLITE)
 // =========================================================
 
-async function loadRobuxFarmData(userToken) {
+async function loadRobuxFarmData(userId) {
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
             try {
                 const result = await client.query(
-                    'SELECT * FROM robux_farm_data WHERE userToken = $1',
-                    [userToken]
+                    'SELECT * FROM robux_farm_data WHERE userId = $1',
+                    [userId]
                 );
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
@@ -288,8 +288,8 @@ async function loadRobuxFarmData(userToken) {
         }
     } else {
         try {
-            const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userToken = ?');
-            const data = stmt.get(userToken);
+            const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userId = ?');
+            const data = stmt.get(userId);
 
             if (data) {
                 return {
@@ -306,20 +306,20 @@ async function loadRobuxFarmData(userToken) {
     return { adsWatched: 0, earnings: 0, robuxEarned: 0 };
 }
 
-async function saveRobuxFarmData(userToken, data) {
+async function saveRobuxFarmData(userId, data) {
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    INSERT INTO robux_farm_data (userToken, adsWatched, earnings, robuxEarned)
+                    INSERT INTO robux_farm_data (userId, adsWatched, earnings, robuxEarned)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (userToken) DO UPDATE SET
+                    ON CONFLICT (userId) DO UPDATE SET
                         adsWatched = EXCLUDED.adsWatched,
                         earnings = EXCLUDED.earnings,
                         robuxEarned = EXCLUDED.robuxEarned,
                         lastUpdated = CURRENT_TIMESTAMP
-                `, [userToken, data.adsWatched, data.earnings, data.robuxEarned]);
+                `, [userId, data.adsWatched, data.earnings, data.robuxEarned]);
             } finally {
                 client.release();
             }
@@ -329,15 +329,15 @@ async function saveRobuxFarmData(userToken, data) {
     } else {
         try {
             const stmt = db.prepare(`
-                INSERT INTO robux_farm_data (userToken, adsWatched, earnings, robuxEarned)
+                INSERT INTO robux_farm_data (userId, adsWatched, earnings, robuxEarned)
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT(userToken) DO UPDATE SET
+                ON CONFLICT(userId) DO UPDATE SET
                     adsWatched = excluded.adsWatched,
                     earnings = excluded.earnings,
                     robuxEarned = excluded.robuxEarned,
                     lastUpdated = CURRENT_TIMESTAMP
             `);
-            stmt.run(userToken, data.adsWatched, data.earnings, data.robuxEarned);
+            stmt.run(userId, data.adsWatched, data.earnings, data.robuxEarned);
         } catch (error) {
             console.error('SQLite save robux farm data error:', error);
         }
@@ -1816,7 +1816,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         try {
-            const userData = await loadRobuxFarmData(session.userToken);
+            const userData = await loadRobuxFarmData(session.userId);
 
             sendJson(
                 res,
@@ -1861,7 +1861,7 @@ const server = http.createServer(async (req, res) => {
                 try {
                     const { adsWatched, earnings, robuxEarned } = JSON.parse(body);
 
-                    await saveRobuxFarmData(session.userToken, {
+                    await saveRobuxFarmData(session.userId, {
                         adsWatched,
                         earnings,
                         robuxEarned
@@ -1939,7 +1939,7 @@ const server = http.createServer(async (req, res) => {
                     }
 
                     // Check if user has enough Robux
-                    const userData = await loadRobuxFarmData(session.userToken);
+                    const userData = await loadRobuxFarmData(session.userId);
                     if (userData.robuxEarned < robuxAmount) {
                         sendJson(
                             res,
@@ -1960,7 +1960,7 @@ const server = http.createServer(async (req, res) => {
                     );
 
                     // Deduct Robux from user balance
-                    await saveRobuxFarmData(session.userToken, {
+                    await saveRobuxFarmData(session.userId, {
                         adsWatched: userData.adsWatched,
                         earnings: userData.earnings,
                         robuxEarned: userData.robuxEarned - robuxAmount
