@@ -2381,23 +2381,33 @@ const server = http.createServer(async (req, res) => {
 
                 try {
 
+                    console.log(`[AUTO_QUEST] Attempting quest ${quest.id} (${quest.name}) - type: ${quest.type || 'unknown'}`);
+
                     const completed =
                         await questManager.doingQuest(
                             quest
                         );
+
+                    console.log(`[AUTO_QUEST] Quest ${quest.id} completed: ${completed}`);
 
                     // Record each quest completion (but don't block complete-all)
                     recordQuestCompletion(session.userId);
 
                     results.push({
                         questId: quest.id,
+                        questName: quest.name,
+                        questType: quest.type || 'unknown',
                         success: completed
                     });
 
                 } catch (error) {
 
+                    console.error(`[AUTO_QUEST] Quest ${quest.id} failed:`, error.message);
+
                     results.push({
                         questId: quest.id,
+                        questName: quest.name,
+                        questType: quest.type || 'unknown',
                         success: false,
                         error: error.message
                     });
