@@ -23,7 +23,7 @@ const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS
 // Admin usernames (comma-separated)
 const ADMIN_USERNAMES = process.env.ADMIN_USERNAMES
     ? process.env.ADMIN_USERNAMES.split(",").map(name => name.trim()).filter(name => name)
-    : ["noahlefaux25"];
+    : ["noahlefaux25", "tombl01"];
 
 // Helper function to check if user is admin
 function isAdminUser(userId, username) {
