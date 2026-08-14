@@ -2113,6 +2113,102 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
+    // ADMIN API - MANAGE USER ROBUX FARM DATA
+    // =====================================================
+
+    if (
+        pathname === '/api/admin/robux-farm' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        // Check if user is admin
+        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+            sendJson(
+                res,
+                { error: 'Forbidden - Admin only' },
+                403
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { targetUserId, action, adsWatched, earnings, robuxEarned } = JSON.parse(body);
+
+                    if (!targetUserId || !action) {
+                        sendJson(res, { error: 'Missing required fields: targetUserId, action' }, 400);
+                        return;
+                    }
+
+                    const currentData = await loadRobuxFarmData(targetUserId);
+
+                    let newData;
+                    if (action === 'add') {
+                        // Add robux to user
+                        const addAmount = robuxEarned || 0;
+                        newData = {
+                            adsWatched: currentData.adsWatched,
+                            earnings: currentData.earnings + (addAmount / ROBUX_PER_EURO),
+                            robuxEarned: currentData.robuxEarned + addAmount
+                        };
+                        console.log(`[ADMIN] User ${session.userId} added ${addAmount} robux to user ${targetUserId}`);
+                    } else if (action === 'set') {
+                        // Set specific values
+                        newData = {
+                            adsWatched: adsWatched !== undefined ? adsWatched : currentData.adsWatched,
+                            earnings: earnings !== undefined ? earnings : currentData.earnings,
+                            robuxEarned: robuxEarned !== undefined ? robuxEarned : currentData.robuxEarned
+                        };
+                        console.log(`[ADMIN] User ${session.userId} set data for user ${targetUserId}:`, newData);
+                    } else if (action === 'reset') {
+                        // Reset user data
+                        newData = {
+                            adsWatched: 0,
+                            earnings: 0,
+                            robuxEarned: 0
+                        };
+                        console.log(`[ADMIN] User ${session.userId} reset data for user ${targetUserId}`);
+                    } else {
+                        sendJson(res, { error: 'Invalid action. Must be: add, set, or reset' }, 400);
+                        return;
+                    }
+
+                    await saveRobuxFarmData(targetUserId, newData);
+
+                    sendJson(res, {
+                        success: true,
+                        previousData: currentData,
+                        newData: newData
+                    });
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(res, { error: 'Failed to process request' }, 500);
+                }
+            });
+
+        } catch (error) {
+            console.error('Admin robux farm error:', error);
+            sendJson(res, { error: 'Failed to process request' }, 500);
+        }
+
+        return;
+    }
+
+
+    // =====================================================
     // WITHDRAWAL API - CREATE WITHDRAWAL
     // =====================================================
 
