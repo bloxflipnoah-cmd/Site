@@ -190,20 +190,29 @@ async function migratePostgreSQLTables() {
             const columns = columnInfo.rows.map(row => row.column_name);
             console.log('Current robux_farm_data columns:', columns);
             
-            // If we have lowercase columns (PostgreSQL default), drop and recreate the table
+            // If we have lowercase columns (PostgreSQL default), migrate them instead of dropping
             if (columns.some(col => col === col.toLowerCase() && 
                 ['userid', 'adswatched', 'robuxearned', 'lastupdated', 'earnings'].includes(col))) {
-                console.log('Detected lowercase columns in robux_farm_data, recreating table...');
-                await client.query(`DROP TABLE IF EXISTS robux_farm_data`);
-                await client.query(`
-                    CREATE TABLE robux_farm_data (
-                        "userId" TEXT PRIMARY KEY,
-                        "adsWatched" INTEGER DEFAULT 0,
-                        "earnings" REAL DEFAULT 0,
-                        "robuxEarned" REAL DEFAULT 0,
-                        "lastUpdated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                `);
+                console.log('Detected lowercase columns in robux_farm_data, migrating columns...');
+                
+                // Backup existing data
+                await client.query(`CREATE TABLE IF NOT EXISTS robux_farm_data_backup AS SELECT * FROM robux_farm_data`);
+                
+                // Rename columns one by one to preserve data
+                if (columns.includes('userid')) {
+                    await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN userid TO "userId"`);
+                }
+                if (columns.includes('adswatched')) {
+                    await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN adswatched TO "adsWatched"`);
+                }
+                if (columns.includes('robuxearned')) {
+                    await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN robuxearned TO "robuxEarned"`);
+                }
+                if (columns.includes('lastupdated')) {
+                    await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN lastupdated TO "lastUpdated"`);
+                }
+                
+                console.log('Column migration completed, data preserved');
             } else if (columns.includes('userid')) {
                 console.log('Migrating robux_farm_data columns...');
                 await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN userid TO "userId"`);
@@ -452,6 +461,52 @@ async function loadRobuxFarmData(userId) {
 }
 
 async function saveRobuxFarmData(userId, data) {
+    // Data validation and integrity checks
+    if (!userId || typeof userId !== 'string') {
+        throw new Error('Invalid userId');
+    }
+    
+    if (!data || typeof data !== 'object') {
+        throw new Error('Invalid data object');
+    }
+    
+    // Validate numeric values
+    const adsWatched = parseInt(data.adsWatched) || 0;
+    const earnings = parseFloat(data.earnings) || 0;
+    const robuxEarned = parseFloat(data.robuxEarned) || 0;
+    
+    // Sanity checks to prevent data corruption
+    if (adsWatched < 0 || adsWatched > 1000000) {
+        console.error(`[DATA_INTEGRITY] Invalid adsWatched value: ${adsWatched} for user ${userId}`);
+        throw new Error('Invalid adsWatched value');
+    }
+    
+    if (earnings < 0 || earnings > 1000000) {
+        console.error(`[DATA_INTEGRITY] Invalid earnings value: ${earnings} for user ${userId}`);
+        throw new Error('Invalid earnings value');
+    }
+    
+    if (robuxEarned < 0 || robuxEarned > 1000000) {
+        console.error(`[DATA_INTEGRITY] Invalid robuxEarned value: ${robuxEarned} for user ${userId}`);
+        throw new Error('Invalid robuxEarned value');
+    }
+    
+    // Check mathematical consistency
+    const expectedEarnings = (adsWatched / 1000) * 0.20; // CPM = 0.20
+    const expectedRobux = expectedEarnings * (200 / 1.50); // ROBUX_PER_EURO
+    
+    // Allow small margin of error for floating point arithmetic
+    const earningsDiff = Math.abs(earnings - expectedEarnings);
+    const robuxDiff = Math.abs(robuxEarned - expectedRobux);
+    
+    if (earningsDiff > 10) { // Allow €10 margin
+        console.warn(`[DATA_INTEGRITY] Earnings mismatch for user ${userId}: expected ${expectedEarnings.toFixed(2)}, got ${earnings.toFixed(2)}`);
+    }
+    
+    if (robuxDiff > 100) { // Allow 100 robux margin
+        console.warn(`[DATA_INTEGRITY] Robux mismatch for user ${userId}: expected ${expectedRobux.toFixed(2)}, got ${robuxEarned.toFixed(2)}`);
+    }
+
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
@@ -464,12 +519,13 @@ async function saveRobuxFarmData(userId, data) {
                         "earnings" = EXCLUDED."earnings",
                         "robuxEarned" = EXCLUDED."robuxEarned",
                         "lastUpdated" = CURRENT_TIMESTAMP
-                `, [userId, data.adsWatched, data.earnings, data.robuxEarned]);
+                `, [userId, adsWatched, earnings, robuxEarned]);
             } finally {
                 client.release();
             }
         } catch (error) {
             console.error('PostgreSQL save robux farm data error:', error);
+            throw error;
         }
     } else {
         try {
@@ -482,9 +538,10 @@ async function saveRobuxFarmData(userId, data) {
                     robuxEarned = excluded.robuxEarned,
                     lastUpdated = CURRENT_TIMESTAMP
             `);
-            stmt.run(userId, data.adsWatched, data.earnings, data.robuxEarned);
+            stmt.run(userId, adsWatched, earnings, robuxEarned);
         } catch (error) {
             console.error('SQLite save robux farm data error:', error);
+            throw error;
         }
     }
 }
@@ -811,6 +868,14 @@ const ROBUX_FARM_LIMITS = {
     maxAdsPerHour: 360 // Maximum realistic ads per hour (1 per 10s)
 };
 
+// Quest completion tracking (anti-exploitation)
+const questCompletionTracker = new Map();
+const QUEST_ABUSE_LIMITS = {
+    minTimeBetweenQuests: 10000, // 10 seconds minimum between quests
+    maxQuestsPerMinute: 6, // Maximum 6 quests per minute (1 per 10s)
+    autoWarnThreshold: 2, // Auto-warn after 2 violations
+};
+
 function checkAPIRateLimit(ip) {
     const now = Date.now();
     let tracker = apiRateLimit.get(ip);
@@ -893,6 +958,57 @@ function recordRobuxFarmAd(userId) {
     tracker.lastAdTime = now;
     tracker.adsThisHour.push(now);
     tracker.totalAds++;
+}
+
+function checkQuestAbuse(userId) {
+    const now = Date.now();
+    let tracker = questCompletionTracker.get(userId);
+
+    if (!tracker) {
+        tracker = { questTimes: [], violations: 0 };
+        questCompletionTracker.set(userId, tracker);
+    }
+
+    // Clean old quest times (older than 1 minute)
+    tracker.questTimes = tracker.questTimes.filter(timestamp => now - timestamp < 60000);
+
+    // Check if user completed quests too quickly
+    if (tracker.questTimes.length >= 2) {
+        const lastTwoQuests = tracker.questTimes.slice(-2);
+        const timeBetweenQuests = lastTwoQuests[1] - lastTwoQuests[0];
+
+        if (timeBetweenQuests < QUEST_ABUSE_LIMITS.minTimeBetweenQuests) {
+            tracker.violations++;
+            console.log(`[QUEST_ABUSE] User ${userId} completed 2 quests in ${timeBetweenQuests}ms (violation #${tracker.violations})`);
+
+            // Auto-warn after threshold
+            if (tracker.violations >= QUEST_ABUSE_LIMITS.autoWarnThreshold) {
+                console.log(`[AUTO_WARN] User ${userId} auto-warned for quest abuse`);
+                addUserWarning(userId);
+                tracker.violations = 0; // Reset violations after warning
+            }
+
+            return {
+                allowed: false,
+                reason: 'Quest completion too fast',
+                violations: tracker.violations
+            };
+        }
+    }
+
+    return { allowed: true };
+}
+
+function recordQuestCompletion(userId) {
+    const now = Date.now();
+    let tracker = questCompletionTracker.get(userId);
+    
+    if (!tracker) {
+        tracker = { questTimes: [], violations: 0 };
+        questCompletionTracker.set(userId, tracker);
+    }
+
+    tracker.questTimes.push(now);
 }
 
 function checkDDoSProtection(ip) {
@@ -2183,6 +2299,18 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // Check quest abuse before processing
+        const questAbuseCheck = checkQuestAbuse(session.userId);
+        if (!questAbuseCheck.allowed) {
+            console.log(`[QUEST_ABUSE_BLOCK] User ${session.userId} blocked from completing all quests: ${questAbuseCheck.reason}`);
+            sendJson(res, { 
+                error: 'Quest completion rate limited',
+                reason: questAbuseCheck.reason,
+                violations: questAbuseCheck.violations
+            }, 429);
+            return;
+        }
+
         try {
 
             const questClient =
@@ -2207,6 +2335,9 @@ const server = http.createServer(async (req, res) => {
                         await questManager.doingQuest(
                             quest
                         );
+
+                    // Record each quest completion
+                    recordQuestCompletion(session.userId);
 
                     results.push({
                         questId: quest.id,
