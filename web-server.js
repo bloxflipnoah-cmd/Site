@@ -871,8 +871,8 @@ const ROBUX_FARM_LIMITS = {
 // Quest completion tracking (anti-exploitation)
 const questCompletionTracker = new Map();
 const QUEST_ABUSE_LIMITS = {
-    minTimeBetweenQuests: 10000, // 10 seconds minimum between quests
-    maxQuestsPerMinute: 6, // Maximum 6 quests per minute (1 per 10s)
+    minTimeBetweenQuests: 19000, // 19 seconds minimum between quests to avoid warning
+    maxQuestsPerMinute: 3, // Maximum 3 quests per minute (1 per 20s)
     autoWarnThreshold: 2, // Auto-warn after 2 violations
 };
 
