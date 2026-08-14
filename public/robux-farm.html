@@ -48,11 +48,27 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 40px;
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .logo {
@@ -72,10 +88,6 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
         }
 
         .stats-grid {

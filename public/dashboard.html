@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="monetag" content="11a237c061b1a8dbc7ae68534143311e">
     <title>Orbistral · Dashboard</title>
-    <script>(function(s){s.dataset.zone='11569497',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <script id="adScript">(function(s){s.dataset.zone='11569497',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
     <style>
         /* =========================================================
            ROOTS & RESET
@@ -208,6 +208,26 @@
         .header {
             position: relative;
             margin-bottom: 28px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .header::after {
@@ -1067,6 +1087,7 @@
         <!-- Main -->
         <div class="main-content">
             <div class="header">
+                <button class="back-btn" onclick="goBack()">← Back</button>
                 <h1 id="greeting">Welcome!</h1>
                 <p class="header-sub">Manage your quests in one click</p>
             </div>
@@ -1179,6 +1200,14 @@
 
                 const adminSec = $('#adminStatsSection');
                 if (adminSec) adminSec.style.display = isAdmin ? 'block' : 'none';
+
+                // Remove ads for admin users
+                if (isAdmin) {
+                    const adScript = document.getElementById('adScript');
+                    if (adScript) {
+                        adScript.remove();
+                    }
+                }
             } catch {
                 window.location.href = '/login';
             }
@@ -1283,6 +1312,11 @@
             await fetch('/logout', { method: 'POST' });
             window.location.href = '/login';
         });
+
+        // --- GO BACK ---
+        function goBack() {
+            window.location.href = '/mode-selection';
+        }
 
         // --- INIT ---
         loadUser();
