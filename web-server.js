@@ -20,6 +20,16 @@ const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS
     ? process.env.ADMIN_DISCORD_IDS.split(",").map(id => id.trim()).filter(id => id)
     : ["1484879718015832127"];
 
+// Admin usernames (comma-separated)
+const ADMIN_USERNAMES = process.env.ADMIN_USERNAMES
+    ? process.env.ADMIN_USERNAMES.split(",").map(name => name.trim()).filter(name => name)
+    : ["noahlefaux25"];
+
+// Helper function to check if user is admin
+function isAdminUser(userId, username) {
+    return ADMIN_DISCORD_IDS.includes(userId) || ADMIN_USERNAMES.includes(username);
+}
+
 // =========================================================
 // DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
 // =========================================================
@@ -1402,7 +1412,7 @@ const server = http.createServer(async (req, res) => {
 
     // Check if user is banned (skip for admin users and API requests)
     // Only block robux farm page, allow other pages like dashboard
-    if (session && !ADMIN_DISCORD_IDS.includes(session.userId) && !pathname.startsWith('/api/')) {
+    if (session && !isAdminUser(session.userId, session.username) && !pathname.startsWith('/api/')) {
         const banStatus = await isUserBanned(session.userId);
         if (banStatus.banned) {
             console.log(`[BAN] User ${session.userId} is banned: ${banStatus.reason}`);
@@ -1473,7 +1483,7 @@ const server = http.createServer(async (req, res) => {
                             </div>
                             
                             <div class="rules">
-                                <h3>📋 Warning System:</h3>
+                                <h3>📋 Warning System Rules:</h3>
                                 <ul>
                                     <li>1 warning = 24h ban</li>
                                     <li>2 warnings = 48h ban</li>
@@ -1987,8 +1997,8 @@ const server = http.createServer(async (req, res) => {
             const userData =
                 await questClient.fetchUserRaw();
 
-            // Check if user is admin by Discord ID
-            const isAdmin = ADMIN_DISCORD_IDS.includes(userData.id);
+            // Check if user is admin by Discord ID or username
+            const isAdmin = isAdminUser(userData.id, userData.username);
 
             sendJson(
                 res,
@@ -2079,7 +2089,7 @@ const server = http.createServer(async (req, res) => {
 
             // Check if user is admin for global stats
             const userData = await questClient.fetchUserRaw();
-            const isAdmin = ADMIN_DISCORD_IDS.includes(userData.id);
+            const isAdmin = isAdminUser(userData.id, userData.username);
 
             let globalStats = null;
             if (isAdmin) {
@@ -2533,7 +2543,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Check if user is admin
-        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+        if (!isAdminUser(session.userId, session.username)) {
             sendJson(
                 res,
                 { error: 'Forbidden - Admin only' },
@@ -2625,7 +2635,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Check if user is admin
-        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+        if (!isAdminUser(session.userId, session.username)) {
             sendJson(res, { error: 'Forbidden - Admin only' }, 403);
             return;
         }
@@ -2797,7 +2807,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Check if user is admin
-        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+        if (!isAdminUser(session.userId, session.username)) {
             sendJson(
                 res,
                 { error: 'Forbidden - Admin only' },
@@ -2845,7 +2855,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Check if user is admin
-        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+        if (!isAdminUser(session.userId, session.username)) {
             sendJson(
                 res,
                 { error: 'Forbidden - Admin only' },
@@ -2927,7 +2937,7 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        const isAdmin = ADMIN_DISCORD_IDS.includes(session.userId);
+        const isAdmin = isAdminUser(session.userId, session.username);
 
         sendJson(
             res,
