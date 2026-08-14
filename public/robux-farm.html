@@ -639,18 +639,33 @@
 
                 isTimerActive = true;
                 const watchBtn = document.getElementById('watchBtn');
+                const timerDisplay = document.getElementById('timerDisplay');
+                const timerCount = document.getElementById('timerCount');
 
                 watchBtn.disabled = true;
+                timerDisplay.style.display = 'block';
 
-                // Increment ads watched immediately (no cooldown)
-                adsWatched++;
-                earnings = (adsWatched / 1000) * CPM;
-                robuxEarned = earnings * ROBUX_PER_EURO;
-                updateDisplay();
-                saveRobuxFarmData();
+                let count = 15;
+                timerCount.textContent = count;
 
-                isTimerActive = false;
-                watchBtn.disabled = false;
+                const timer = setInterval(() => {
+                    count--;
+                    timerCount.textContent = count;
+
+                    if (count <= 0) {
+                        clearInterval(timer);
+                        isTimerActive = false;
+                        watchBtn.disabled = false;
+                        timerDisplay.style.display = 'none';
+
+                        // Increment ads watched after cooldown
+                        adsWatched++;
+                        earnings = (adsWatched / 1000) * CPM;
+                        robuxEarned = earnings * ROBUX_PER_EURO;
+                        updateDisplay();
+                        saveRobuxFarmData();
+                    }
+                }, 1000);
             };
 
             // Only expose through button click, not console
@@ -675,33 +690,10 @@
                     if (adScript) {
                         adScript.remove();
                     }
-                    // Disable watch button for admins
-                    const watchBtn = document.getElementById('watchBtn');
-                    if (watchBtn) {
-                        watchBtn.disabled = true;
-                        watchBtn.textContent = 'No ads for admins';
-                    }
                 }
             } catch (e) {
                 console.error('Admin status check error:', e);
             }
-        }
-
-        // Check if ads are loaded
-        function checkAdsLoaded() {
-            const watchBtn = document.getElementById('watchBtn');
-            const adScript = document.getElementById('adScript');
-            
-            // Wait for ad script to load
-            setTimeout(() => {
-                if (!adScript || !window.__ad_loaded) {
-                    // If no ads loaded, disable button
-                    if (watchBtn) {
-                        watchBtn.disabled = true;
-                        watchBtn.textContent = 'No ads available';
-                    }
-                }
-            }, 3000);
         }
 
         // Toggle withdraw form
@@ -944,7 +936,6 @@
         // Initialize
         loadRobuxFarmData();
         checkAdminStatus();
-        checkAdsLoaded();
     </script>
 </body>
 </html>
