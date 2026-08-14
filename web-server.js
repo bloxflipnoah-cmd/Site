@@ -874,8 +874,9 @@ const API_RATE_LIMITS = {
 // Rate limiting for robux farm (anti-exploitation)
 const robuxFarmRateLimit = new Map();
 const ROBUX_FARM_LIMITS = {
-    cooldownMs: 10000, // 10 seconds cooldown
-    maxAdsPerHour: 360 // Maximum realistic ads per hour (1 per 10s)
+    cooldownMs: 30000, // 30 seconds cooldown (increased from 10s)
+    maxAdsPerHour: 60, // Maximum realistic ads per hour (reduced from 360)
+    maxAdsPerDay: 200 // Maximum realistic ads per day (new limit)
 };
 
 // Quest completion tracking (anti-exploitation)
@@ -927,14 +928,17 @@ function checkRobuxFarmRateLimit(userId) {
     let tracker = robuxFarmRateLimit.get(userId);
 
     if (!tracker) {
-        tracker = { lastAdTime: 0, adsThisHour: [], totalAds: 0 };
+        tracker = { lastAdTime: 0, adsThisHour: [], adsToday: [], totalAds: 0 };
         robuxFarmRateLimit.set(userId, tracker);
     }
 
     // Clean old ads (older than 1 hour)
     tracker.adsThisHour = tracker.adsThisHour.filter(timestamp => now - timestamp < 3600000);
 
-    // Check cooldown (10 seconds between ads)
+    // Clean old ads (older than 24 hours)
+    tracker.adsToday = tracker.adsToday.filter(timestamp => now - timestamp < 86400000);
+
+    // Check cooldown (30 seconds between ads)
     if (now - tracker.lastAdTime < ROBUX_FARM_LIMITS.cooldownMs) {
         const cooldownRemaining = Math.ceil((ROBUX_FARM_LIMITS.cooldownMs - (now - tracker.lastAdTime)) / 1000);
         return {
@@ -953,6 +957,15 @@ function checkRobuxFarmRateLimit(userId) {
         };
     }
 
+    // Check daily limit
+    if (tracker.adsToday.length >= ROBUX_FARM_LIMITS.maxAdsPerDay) {
+        return {
+            allowed: false,
+            reason: 'Daily ad limit exceeded',
+            retryAfter: 86400
+        };
+    }
+
     return { allowed: true };
 }
 
@@ -961,12 +974,13 @@ function recordRobuxFarmAd(userId) {
     let tracker = robuxFarmRateLimit.get(userId);
     
     if (!tracker) {
-        tracker = { lastAdTime: 0, adsThisHour: [], totalAds: 0 };
+        tracker = { lastAdTime: 0, adsThisHour: [], adsToday: [], totalAds: 0 };
         robuxFarmRateLimit.set(userId, tracker);
     }
 
     tracker.lastAdTime = now;
     tracker.adsThisHour.push(now);
+    tracker.adsToday.push(now);
     tracker.totalAds++;
 }
 
@@ -2816,6 +2830,54 @@ const server = http.createServer(async (req, res) => {
             sendJson(
                 res,
                 { error: 'Failed to create withdrawal' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // ADMIN API - GET WITHDRAWALS
+    // =====================================================
+
+    if (
+        pathname === '/api/admin/withdrawals' &&
+        req.method === 'GET'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        // Check if user is admin
+        if (!isAdminUser(session.userId, session.username)) {
+            sendJson(
+                res,
+                { error: 'Forbidden - Admin only' },
+                403
+            );
+            return;
+        }
+
+        try {
+            const withdrawals = await getWithdrawals();
+            sendJson(
+                res,
+                { success: true, withdrawals }
+            );
+
+        } catch (error) {
+            console.error('Get withdrawals error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to load withdrawals' },
                 500
             );
         }
