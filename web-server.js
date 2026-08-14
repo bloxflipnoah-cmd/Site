@@ -1400,8 +1400,9 @@ const server = http.createServer(async (req, res) => {
         session = sessions.get(sessionId);
     }
 
-    // Check if user is banned (skip for admin users and /api/user endpoint)
-    if (session && !ADMIN_DISCORD_IDS.includes(session.userId) && pathname !== '/api/user') {
+    // Check if user is banned (skip for admin users and API requests)
+    // Only block HTML page requests, not API calls
+    if (session && !ADMIN_DISCORD_IDS.includes(session.userId) && !pathname.startsWith('/api/')) {
         const banStatus = await isUserBanned(session.userId);
         if (banStatus.banned) {
             console.log(`[BAN] User ${session.userId} is banned: ${banStatus.reason}`);
@@ -1487,10 +1488,6 @@ const server = http.createServer(async (req, res) => {
                 `);
                 return;
             }
-            
-            // Return JSON for API requests (except /api/user)
-            sendJson(res, { error: 'Account suspended', reason: banStatus.reason, warnings: warnings }, 403);
-            return;
         }
     }
 
