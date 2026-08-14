@@ -29,6 +29,8 @@ let pgPool = null; // PostgreSQL pool
 let usePostgreSQL = false;
 
 async function initDatabase() {
+    console.log('DATABASE_URL:', DATABASE_URL ? 'configured' : 'not configured');
+
     // Try PostgreSQL first (for Railway)
     if (DATABASE_URL) {
         try {
@@ -264,6 +266,8 @@ async function deleteSession(sessionId) {
 // =========================================================
 
 async function loadRobuxFarmData(userId) {
+    console.log('loadRobuxFarmData - usePostgreSQL:', usePostgreSQL, 'userId:', userId);
+
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
@@ -272,6 +276,7 @@ async function loadRobuxFarmData(userId) {
                     'SELECT * FROM robux_farm_data WHERE userId = $1',
                     [userId]
                 );
+                console.log('PostgreSQL query result rows:', result.rows.length);
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
                     return {
@@ -291,6 +296,8 @@ async function loadRobuxFarmData(userId) {
             const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userId = ?');
             const data = stmt.get(userId);
 
+            console.log('SQLite query result:', data ? 'found' : 'not found');
+
             if (data) {
                 return {
                     adsWatched: data.adsWatched || 0,
@@ -303,6 +310,7 @@ async function loadRobuxFarmData(userId) {
         }
     }
 
+    console.log('Returning default data (0, 0, 0)');
     return { adsWatched: 0, earnings: 0, robuxEarned: 0 };
 }
 
