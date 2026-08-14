@@ -2299,18 +2299,6 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        // Check quest abuse before processing
-        const questAbuseCheck = checkQuestAbuse(session.userId);
-        if (!questAbuseCheck.allowed) {
-            console.log(`[QUEST_ABUSE_BLOCK] User ${session.userId} blocked from completing all quests: ${questAbuseCheck.reason}`);
-            sendJson(res, { 
-                error: 'Quest completion rate limited',
-                reason: questAbuseCheck.reason,
-                violations: questAbuseCheck.violations
-            }, 429);
-            return;
-        }
-
         try {
 
             const questClient =
@@ -2336,7 +2324,7 @@ const server = http.createServer(async (req, res) => {
                             quest
                         );
 
-                    // Record each quest completion
+                    // Record each quest completion (but don't block complete-all)
                     recordQuestCompletion(session.userId);
 
                     results.push({
