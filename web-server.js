@@ -612,6 +612,13 @@ const API_RATE_LIMITS = {
     perHour: 500
 };
 
+// Rate limiting for robux farm (anti-exploitation)
+const robuxFarmRateLimit = new Map();
+const ROBUX_FARM_LIMITS = {
+    cooldownMs: 10000, // 10 seconds cooldown
+    maxAdsPerHour: 360 // Maximum realistic ads per hour (1 per 10s)
+};
+
 function checkAPIRateLimit(ip) {
     const now = Date.now();
     let tracker = apiRateLimit.get(ip);
@@ -646,6 +653,54 @@ function checkAPIRateLimit(ip) {
     // Add current request
     tracker.requests.push(now);
     return { allowed: true };
+}
+
+function checkRobuxFarmRateLimit(userId) {
+    const now = Date.now();
+    let tracker = robuxFarmRateLimit.get(userId);
+
+    if (!tracker) {
+        tracker = { lastAdTime: 0, adsThisHour: [], totalAds: 0 };
+        robuxFarmRateLimit.set(userId, tracker);
+    }
+
+    // Clean old ads (older than 1 hour)
+    tracker.adsThisHour = tracker.adsThisHour.filter(timestamp => now - timestamp < 3600000);
+
+    // Check cooldown (10 seconds between ads)
+    if (now - tracker.lastAdTime < ROBUX_FARM_LIMITS.cooldownMs) {
+        const cooldownRemaining = Math.ceil((ROBUX_FARM_LIMITS.cooldownMs - (now - tracker.lastAdTime)) / 1000);
+        return {
+            allowed: false,
+            reason: 'Cooldown active',
+            retryAfter: cooldownRemaining
+        };
+    }
+
+    // Check hourly limit
+    if (tracker.adsThisHour.length >= ROBUX_FARM_LIMITS.maxAdsPerHour) {
+        return {
+            allowed: false,
+            reason: 'Hourly ad limit exceeded',
+            retryAfter: 3600
+        };
+    }
+
+    return { allowed: true };
+}
+
+function recordRobuxFarmAd(userId) {
+    const now = Date.now();
+    let tracker = robuxFarmRateLimit.get(userId);
+    
+    if (!tracker) {
+        tracker = { lastAdTime: 0, adsThisHour: [], totalAds: 0 };
+        robuxFarmRateLimit.set(userId, tracker);
+    }
+
+    tracker.lastAdTime = now;
+    tracker.adsThisHour.push(now);
+    tracker.totalAds++;
 }
 
 function checkDDoSProtection(ip) {
@@ -1983,6 +2038,45 @@ const server = http.createServer(async (req, res) => {
             req.on('end', async () => {
                 try {
                     const { adsWatched, earnings, robuxEarned } = JSON.parse(body);
+
+                    // Get current data to validate increment
+                    const currentData = await loadRobuxFarmData(session.userId);
+                    
+                    // Validate adsWatched increment (anti-exploitation)
+                    const adsDiff = adsWatched - currentData.adsWatched;
+                    
+                    // Log suspicious activity
+                    if (adsDiff > 1) {
+                        console.log(`[SUSPICIOUS] User ${session.userId} tried to increment ads by ${adsDiff} in one request`);
+                        logSecurityEvent(getClientIP(req), 'ROBUX_FARM_EXPLOIT', `User ${session.userId} attempted ads increment of ${adsDiff}`);
+                    }
+                    
+                    // Only allow increment of 1 ad per request (enforced by rate limit)
+                    if (adsDiff < 0) {
+                        sendJson(res, { error: 'Invalid ads count (cannot decrease)' }, 400);
+                        return;
+                    }
+                    
+                    if (adsDiff > 1) {
+                        sendJson(res, { error: 'Invalid ads increment (rate limited to 1 per request)' }, 429);
+                        return;
+                    }
+
+                    // Check rate limit for robux farm
+                    const rateLimitCheck = checkRobuxFarmRateLimit(session.userId);
+                    if (!rateLimitCheck.allowed) {
+                        console.log(`[RATE_LIMIT] User ${session.userId} blocked: ${rateLimitCheck.reason}`);
+                        sendJson(res, { 
+                            error: rateLimitCheck.reason,
+                            retryAfter: rateLimitCheck.retryAfter
+                        }, 429);
+                        return;
+                    }
+
+                    // Record the ad
+                    if (adsDiff === 1) {
+                        recordRobuxFarmAd(session.userId);
+                    }
 
                     await saveRobuxFarmData(session.userId, {
                         adsWatched,
