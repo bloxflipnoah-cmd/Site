@@ -1401,7 +1401,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Check if user is banned (skip for admin users and API requests)
-    // Only block HTML page requests, not API calls
+    // Only block robux farm page, allow other pages like dashboard
     if (session && !ADMIN_DISCORD_IDS.includes(session.userId) && !pathname.startsWith('/api/')) {
         const banStatus = await isUserBanned(session.userId);
         if (banStatus.banned) {
@@ -1410,8 +1410,8 @@ const server = http.createServer(async (req, res) => {
             // Get warning details for the ban page
             const warnings = await getUserWarnings(session.userId);
             
-            // Show ban page for HTML requests
-            if (req.method === 'GET' && (pathname.endsWith('.html') || pathname === '/' || !pathname.includes('.'))) {
+            // Only block robux-farm page specifically
+            if (req.method === 'GET' && (pathname === '/robux-farm' || pathname === '/robux-farm.html')) {
                 res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
                 res.end(`
                     <!DOCTYPE html>
@@ -1464,7 +1464,7 @@ const server = http.createServer(async (req, res) => {
                     </head>
                     <body>
                         <div class="container">
-                            <h1>⚠️ Account Suspended</h1>
+                            <h1>⚠️ Robux Farm Suspended</h1>
                             <p class="reason">${banStatus.reason}</p>
                             
                             <div class="warning-count">
@@ -1481,7 +1481,7 @@ const server = http.createServer(async (req, res) => {
                                 </ul>
                             </div>
                             
-                            <p style="color: #70799a; margin-top: 20px;">Contact support if you believe this is an error.</p>
+                            <p style="color: #70799a; margin-top: 20px;">Auto Quest is still available. Contact support if you believe this is an error.</p>
                         </div>
                     </body>
                     </html>
