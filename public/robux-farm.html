@@ -503,56 +503,62 @@
 
         <!-- Admin User Management -->
         <div class="admin-withdrawals" id="adminUserManagement" style="display: none;">
-            <h2>User Management (Admin)</h2>
-            <div class="form-group">
-                <label>User ID (Discord ID)</label>
-                <input type="text" id="targetUserId" placeholder="Enter user Discord ID">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #00d4ff;">👑 User Management</h2>
+                <span style="background: linear-gradient(110deg, #4052ff, #3e68ff); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold;">ADMIN</span>
             </div>
             <div class="form-group">
-                <label>Action</label>
-                <select id="adminAction" onchange="toggleAdminFields()">
-                    <option value="add">Add Robux</option>
-                    <option value="set">Set Values</option>
-                    <option value="reset">Reset Account</option>
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">User ID (Discord ID)</label>
+                <input type="text" id="targetUserId" placeholder="Enter user Discord ID" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
+            </div>
+            <div class="form-group">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Action</label>
+                <select id="adminAction" onchange="toggleAdminFields()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
+                    <option value="add">➕ Add Robux</option>
+                    <option value="set">⚙️ Set Values</option>
+                    <option value="reset">🔄 Reset Account</option>
                 </select>
             </div>
             <div class="form-group" id="addRobuxField">
-                <label>Robux to Add</label>
-                <input type="number" id="addRobuxAmount" placeholder="Enter amount" min="0" step="0.01">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Robux to Add</label>
+                <input type="number" id="addRobuxAmount" placeholder="Enter amount" min="0" step="0.01" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
             </div>
             <div class="form-group" id="setValuesFields" style="display: none;">
-                <label>Ads Watched</label>
-                <input type="number" id="setAdsWatched" placeholder="Enter ads count" min="0">
-                <label>Earnings (€)</label>
-                <input type="number" id="setEarnings" placeholder="Enter earnings" min="0" step="0.01">
-                <label>Robux Earned</label>
-                <input type="number" id="setRobuxEarned" placeholder="Enter robux" min="0" step="0.01">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Ads Watched</label>
+                <input type="number" id="setAdsWatched" placeholder="Enter ads count" min="0" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px; margin-bottom: 10px;">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Earnings (€)</label>
+                <input type="number" id="setEarnings" placeholder="Enter earnings" min="0" step="0.01" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px; margin-bottom: 10px;">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Robux Earned</label>
+                <input type="number" id="setRobuxEarned" placeholder="Enter robux" min="0" step="0.01" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(120, 140, 255, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
             </div>
-            <button class="withdraw-submit-btn" onclick="executeAdminAction()">Execute</button>
-            <div id="adminResult" style="margin-top: 15px; color: #70799a;"></div>
+            <button class="withdraw-submit-btn" onclick="executeAdminAction()" style="background: linear-gradient(110deg, #4052ff, #3e68ff); border: none; padding: 12px 25px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">⚡ Execute Action</button>
+            <div id="adminResult" style="margin-top: 15px; color: #70799a; padding: 10px; background: rgba(0, 212, 255, 0.1); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.2);"></div>
         </div>
 
         <!-- Admin Warning Management -->
         <div class="admin-withdrawals" id="adminWarningManagement" style="display: none;">
-            <h2>Warning Management (Admin)</h2>
-            <div class="form-group">
-                <label>User ID (Discord ID)</label>
-                <input type="text" id="warningUserId" placeholder="Enter user Discord ID">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #ffc107;">⚠️ Warning Management</h2>
+                <span style="background: linear-gradient(110deg, #ffc107, #ff9800); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #02030a;">ADMIN</span>
             </div>
             <div class="form-group">
-                <label>Action</label>
-                <select id="warningAction">
-                    <option value="add">Add Warning</option>
-                    <option value="clear">Clear Warnings</option>
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">User ID (Discord ID)</label>
+                <input type="text" id="warningUserId" placeholder="Enter user Discord ID" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
+            </div>
+            <div class="form-group">
+                <label style="color: #858eaf; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Action</label>
+                <select id="warningAction" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 8px; padding: 12px 15px; color: white; font-size: 14px;">
+                    <option value="add">⚠️ Add Warning</option>
+                    <option value="clear">✅ Clear Warnings</option>
                 </select>
             </div>
-            <button class="withdraw-submit-btn" onclick="executeWarningAction()">Execute</button>
-            <div id="warningResult" style="margin-top: 15px; color: #70799a;"></div>
+            <button class="withdraw-submit-btn" onclick="executeWarningAction()" style="background: linear-gradient(110deg, #ffc107, #ff9800); border: none; padding: 12px 25px; border-radius: 8px; color: #02030a; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">⚡ Execute Action</button>
+            <div id="warningResult" style="margin-top: 15px; color: #70799a; padding: 10px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.2);"></div>
             <div style="margin-top: 20px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px;">
-                <h3 style="color: #ffc107; margin-bottom: 10px;">Warning System Rules:</h3>
-                <ul style="color: #70799a; margin-left: 20px;">
-                    <li>1 warning = 24h ban</li>
-                    <li>2 warnings = 48h ban</li>
+                <h3 style="color: #ffc107; margin-bottom: 10px; font-size: 14px;">📋 Warning System Rules:</h3>
+                <ul style="color: #70799a; margin-left: 20px; font-size: 13px;">
+                    <li style="margin-bottom: 5px;">1 warning = 24h ban</li>
+                    <li style="margin-bottom: 5px;">2 warnings = 48h ban</li>
                     <li>3 warnings = Permanent ban</li>
                 </ul>
             </div>

@@ -1987,8 +1987,8 @@ const server = http.createServer(async (req, res) => {
             const userData =
                 await questClient.fetchUserRaw();
 
-            // Check if user is admin
-            const isAdmin = userData.username === 'theotim3637_04894';
+            // Check if user is admin by Discord ID
+            const isAdmin = ADMIN_DISCORD_IDS.includes(userData.id);
 
             sendJson(
                 res,
@@ -2079,7 +2079,7 @@ const server = http.createServer(async (req, res) => {
 
             // Check if user is admin for global stats
             const userData = await questClient.fetchUserRaw();
-            const isAdmin = userData.username === 'theotim3637_04894';
+            const isAdmin = ADMIN_DISCORD_IDS.includes(userData.id);
 
             let globalStats = null;
             if (isAdmin) {
