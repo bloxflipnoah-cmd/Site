@@ -874,9 +874,9 @@ const API_RATE_LIMITS = {
 // Rate limiting for robux farm (anti-exploitation)
 const robuxFarmRateLimit = new Map();
 const ROBUX_FARM_LIMITS = {
-    cooldownMs: 20000, // 20 seconds cooldown
-    maxAdsPerHour: 60, // Maximum realistic ads per hour (reduced from 360)
-    maxAdsPerDay: 200 // Maximum realistic ads per day (new limit)
+    cooldownMs: 0, // No cooldown (ads not loading)
+    maxAdsPerHour: 999999, // No limit (ads not loading)
+    maxAdsPerDay: 999999 // No limit (ads not loading)
 };
 
 // Quest completion tracking (anti-exploitation)

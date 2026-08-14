@@ -639,33 +639,18 @@
 
                 isTimerActive = true;
                 const watchBtn = document.getElementById('watchBtn');
-                const timerDisplay = document.getElementById('timerDisplay');
-                const timerCount = document.getElementById('timerCount');
 
                 watchBtn.disabled = true;
-                timerDisplay.style.display = 'block';
 
-                let count = 20;
-                timerCount.textContent = count;
+                // Increment ads watched immediately (no cooldown)
+                adsWatched++;
+                earnings = (adsWatched / 1000) * CPM;
+                robuxEarned = earnings * ROBUX_PER_EURO;
+                updateDisplay();
+                saveRobuxFarmData();
 
-                const timer = setInterval(() => {
-                    count--;
-                    timerCount.textContent = count;
-
-                    if (count <= 0) {
-                        clearInterval(timer);
-                        isTimerActive = false;
-                        watchBtn.disabled = false;
-                        timerDisplay.style.display = 'none';
-
-                        // Increment ads watched after cooldown
-                        adsWatched++;
-                        earnings = (adsWatched / 1000) * CPM;
-                        robuxEarned = earnings * ROBUX_PER_EURO;
-                        updateDisplay();
-                        saveRobuxFarmData();
-                    }
-                }, 1000);
+                isTimerActive = false;
+                watchBtn.disabled = false;
             };
 
             // Only expose through button click, not console
