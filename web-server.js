@@ -2652,18 +2652,17 @@ const server = http.createServer(async (req, res) => {
                     sendJson(res, {
                         success: true,
                         previousData: currentData,
-                        newData: newData
+                        newData
                     });
 
-                } catch (parseError) {
-                    console.error('Parse error:', parseError);
-                    sendJson(res, { error: 'Failed to process request' }, 500);
+                } catch (error) {
+                    console.error('Admin robux farm action error:', error);
+                    sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
                 }
             });
-
         } catch (error) {
-            console.error('Admin robux farm error:', error);
-            sendJson(res, { error: 'Failed to process request' }, 500);
+            console.error('Admin robux farm request error:', error);
+            sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
         }
 
         return;
@@ -2721,18 +2720,17 @@ const server = http.createServer(async (req, res) => {
                     sendJson(res, {
                         success: true,
                         warnings: currentWarnings,
-                        banStatus: banStatus
+                        banStatus
                     });
 
-                } catch (parseError) {
-                    console.error('Parse error:', parseError);
-                    sendJson(res, { error: 'Failed to process request' }, 500);
+                } catch (error) {
+                    console.error('Admin warning action error:', error);
+                    sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
                 }
             });
-
         } catch (error) {
-            console.error('Admin warnings error:', error);
-            sendJson(res, { error: 'Failed to process request' }, 500);
+            console.error('Admin warning request error:', error);
+            sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
         }
 
         return;
