@@ -166,8 +166,23 @@ async function migratePostgreSQLTables() {
             `);
             
             const columns = columnInfo.rows.map(row => row.column_name);
+            console.log('Current robux_farm_data columns:', columns);
             
-            if (columns.includes('userid')) {
+            // If we have lowercase columns (PostgreSQL default), drop and recreate the table
+            if (columns.some(col => col === col.toLowerCase() && 
+                ['userid', 'adswatched', 'robuxearned', 'lastupdated', 'earnings'].includes(col))) {
+                console.log('Detected lowercase columns in robux_farm_data, recreating table...');
+                await client.query(`DROP TABLE IF EXISTS robux_farm_data`);
+                await client.query(`
+                    CREATE TABLE robux_farm_data (
+                        "userId" TEXT PRIMARY KEY,
+                        "adsWatched" INTEGER DEFAULT 0,
+                        "earnings" REAL DEFAULT 0,
+                        "robuxEarned" REAL DEFAULT 0,
+                        "lastUpdated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                `);
+            } else if (columns.includes('userid')) {
                 console.log('Migrating robux_farm_data columns...');
                 await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN userid TO "userId"`);
             }
