@@ -396,6 +396,28 @@
             background: rgba(244, 67, 54, 0.3);
         }
 
+        .coming-soon {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
+            border-radius: 15px;
+            padding: 50px 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .coming-soon-content h2 {
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .coming-soon-content p {
+            color: #70799a;
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 15px 20px;
@@ -410,304 +432,24 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">Obistral · Robux Farm</div>
+            <h1>Robux Farm</h1>
             <button class="back-btn" onclick="goBack()">← Back</button>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Ads Watched</div>
-                <div class="stat-value" id="adsWatched">0</div>
+        <div class="coming-soon">
+            <div class="coming-soon-content">
+                <h2>🎮 Robux Farm arrive bientôt !</h2>
+                <p>Gagne des Robux en regardant des publicités.</p>
+                <p>Le système sera disponible prochainement.</p>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Robux Earned</div>
-                <div class="stat-value" id="robuxEarned">0</div>
-            </div>
-        </div>
-
-        <div class="progress-container">
-            <div class="progress-header">
-                <h2>Progress to 200 Robux</h2>
-                <div class="stat-value" id="targetProgress">0%</div>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text">
-                <span id="currentRobux">0</span> / 200 Robux
-            </div>
-        </div>
-
-        <div class="ads-section">
-            <button class="watch-btn" id="watchBtn" onclick="watchAd()">Click to earn robux</button>
-            <div class="timer-display" id="timerDisplay" style="display: none;">
-                Wait <span id="timerCount">10</span>s before next click
-            </div>
-        </div>
-
-        <!-- Withdraw Section (Admin Only) -->
-        <div class="withdraw-section" id="withdrawSection" style="display: none;">
-            <div class="withdraw-header">
-                <h2>Withdraw Robux</h2>
-                <button class="withdraw-toggle-btn" onclick="toggleWithdrawForm()">Request Withdraw</button>
-            </div>
-
-            <!-- Withdraw Form -->
-            <div class="withdraw-form" id="withdrawForm" style="display: none;">
-                <div class="form-group">
-                    <label>PSD (Password)</label>
-                    <input type="text" id="psdInput" placeholder="Enter your PSD">
-                </div>
-                <div class="form-group">
-                    <label>Gamepass ID (200 Robux)</label>
-                    <input type="text" id="gamepassInput" placeholder="Enter gamepass ID">
-                </div>
-                <div class="form-group">
-                    <label>Amount (Min: 200 Robux)</label>
-                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="200" step="1">
-                </div>
-                <button class="withdraw-submit-btn" onclick="submitWithdraw()">Submit Withdraw</button>
-            </div>
-        </div>
-
-        <!-- Admin Withdrawals View -->
-        <div class="admin-withdrawals" id="adminWithdrawals" style="display: none;">
-            <h2>Withdrawals (Admin)</h2>
-            <button class="refresh-btn" onclick="loadWithdrawals()">Refresh</button>
-            <div class="withdrawals-list" id="withdrawalsList"></div>
         </div>
     </div>
 
     <script>
-        // Constants
-        const CPM = 0.50; // € per 1000 views
-        const ROBUX_PRICE = 1.50; // € for 200 Robux
-        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
-        // 50% profit margin: 30 views per Robux (6000 views for 200 Robux)
-        const VIEWS_PER_ROBUX = 30;
-
-        // State
-        let adsWatched = 0;
-        let earnings = 0;
-        let robuxEarned = 0;
-
-        // Load data from server
-        async function loadRobuxFarmData() {
-            try {
-                const res = await fetch('/api/robux-farm/data');
-                const data = await res.json();
-                if (data.success && data.data) {
-                    adsWatched = data.data.adsWatched || 0;
-                    earnings = data.data.earnings || 0;
-                    robuxEarned = data.data.robuxEarned || 0;
-                    updateDisplay();
-                }
-            } catch (e) {
-                console.error('Load robux farm data error:', e);
-            }
-        }
-
-        // Save data to server
-        async function saveRobuxFarmData() {
-            try {
-                await fetch('/api/robux-farm/data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ adsWatched, earnings, robuxEarned })
-                });
-            } catch (e) {
-                console.error('Save robux farm data error:', e);
-            }
-        }
-
-        // Update display
-        function updateDisplay() {
-            document.getElementById('adsWatched').textContent = adsWatched.toLocaleString();
-            document.getElementById('robuxEarned').textContent = robuxEarned.toFixed(2);
-
-            const targetRobux = 200;
-            const progress = (robuxEarned / targetRobux) * 100;
-            document.getElementById('targetProgress').textContent = `${progress.toFixed(2)}%`;
-            document.getElementById('progressFill').style.width = `${Math.min(progress, 100)}%`;
-            document.getElementById('currentRobux').textContent = robuxEarned.toFixed(2);
-        }
-
-        // Watch ad
-        let isTimerActive = false;
-        const TIMER_SECONDS = 10;
-
-        function watchAd() {
-            if (isTimerActive) return;
-
-            adsWatched++;
-            earnings = (adsWatched / 1000) * CPM;
-            robuxEarned = earnings * ROBUX_PER_EURO;
-
-            updateDisplay();
-            saveRobuxFarmData();
-
-            // Start timer
-            isTimerActive = true;
-            const btn = document.getElementById('watchBtn');
-            const timerDisplay = document.getElementById('timerDisplay');
-            const timerCount = document.getElementById('timerCount');
-
-            btn.disabled = true;
-            btn.style.display = 'none';
-            timerDisplay.style.display = 'block';
-
-            let timeLeft = TIMER_SECONDS;
-            timerCount.textContent = timeLeft;
-
-            const timer = setInterval(() => {
-                timeLeft--;
-                timerCount.textContent = timeLeft;
-
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    isTimerActive = false;
-                    btn.disabled = false;
-                    btn.style.display = 'block';
-                    timerDisplay.style.display = 'none';
-                }
-            }, 1000);
-        }
-
         // Go back
         function goBack() {
             window.location.href = '/mode-selection';
         }
-
-        // Check if user is admin
-        async function checkAdminStatus() {
-            try {
-                const res = await fetch('/api/user/admin-status');
-                const data = await res.json();
-                if (data.isAdmin) {
-                    document.getElementById('withdrawSection').style.display = 'block';
-                    document.getElementById('adminWithdrawals').style.display = 'block';
-                    loadWithdrawals();
-                }
-            } catch (e) {
-                console.error('Admin status check error:', e);
-            }
-        }
-
-        // Toggle withdraw form
-        function toggleWithdrawForm() {
-            const form = document.getElementById('withdrawForm');
-            form.style.display = form.style.display === 'none' ? 'flex' : 'none';
-        }
-
-        // Submit withdraw
-        async function submitWithdraw() {
-            const psd = document.getElementById('psdInput').value;
-            const gamepassId = document.getElementById('gamepassInput').value;
-            const robuxAmount = parseFloat(document.getElementById('robuxAmountInput').value);
-
-            if (!psd || !gamepassId || !robuxAmount) {
-                alert('Please fill in all fields');
-                return;
-            }
-
-            if (robuxAmount < 200) {
-                alert('Minimum withdrawal is 200 Robux');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/withdrawals', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ psd, gamepassId, robuxAmount })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    alert('Withdrawal request submitted successfully!');
-                    document.getElementById('psdInput').value = '';
-                    document.getElementById('gamepassInput').value = '';
-                    document.getElementById('robuxAmountInput').value = '';
-                    toggleWithdrawForm();
-                    updateDisplay();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (e) {
-                console.error('Withdraw error:', e);
-                alert('Failed to submit withdrawal');
-            }
-        }
-
-        // Load withdrawals (admin)
-        async function loadWithdrawals() {
-            try {
-                const res = await fetch('/api/withdrawals');
-                const data = await res.json();
-
-                if (data.success) {
-                    displayWithdrawals(data.withdrawals);
-                }
-            } catch (e) {
-                console.error('Load withdrawals error:', e);
-            }
-        }
-
-        // Display withdrawals
-        function displayWithdrawals(withdrawals) {
-            const list = document.getElementById('withdrawalsList');
-            list.innerHTML = '';
-
-            withdrawals.forEach(withdrawal => {
-                const date = new Date(withdrawal.createdAt).toLocaleString();
-                const statusClass = `status-${withdrawal.status}`;
-
-                const item = document.createElement('div');
-                item.className = 'withdrawal-item';
-                item.innerHTML = `
-                    <div class="withdrawal-info">
-                        <div class="withdrawal-username">${withdrawal.username}</div>
-                        <div class="withdrawal-details">${withdrawal.robuxAmount} Robux • ${date}</div>
-                        <div class="withdrawal-details">PSD: ${withdrawal.psd} • Gamepass: ${withdrawal.gamepassId}</div>
-                    </div>
-                    <div class="withdrawal-actions">
-                        <span class="withdrawal-status ${statusClass}">${withdrawal.status}</span>
-                        ${withdrawal.status === 'pending' ? `
-                            <button class="action-btn approve-btn" onclick="updateWithdrawalStatus('${withdrawal.id}', 'approved')">Approve</button>
-                            <button class="action-btn reject-btn" onclick="updateWithdrawalStatus('${withdrawal.id}', 'rejected')">Reject</button>
-                        ` : ''}
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        // Update withdrawal status (admin)
-        async function updateWithdrawalStatus(withdrawalId, status) {
-            try {
-                const res = await fetch('/api/withdrawals/status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ withdrawalId, status })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    loadWithdrawals();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (e) {
-                console.error('Update withdrawal status error:', e);
-                alert('Failed to update withdrawal status');
-            }
-        }
-
-        // Initialize
-        loadRobuxFarmData();
-        checkAdminStatus();
     </script>
 </body>
 </html>
