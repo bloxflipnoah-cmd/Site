@@ -1290,6 +1290,9 @@ const server = http.createServer(async (req, res) => {
         if (banStatus.banned) {
             console.log(`[BAN] User ${session.userId} is banned: ${banStatus.reason}`);
             
+            // Get warning details for the ban page
+            const warnings = await getUserWarnings(session.userId);
+            
             // Show ban page for HTML requests
             if (req.method === 'GET' && (pathname.endsWith('.html') || pathname === '/' || !pathname.includes('.'))) {
                 res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -1319,15 +1322,49 @@ const server = http.createServer(async (req, res) => {
                                 border-radius: 15px;
                                 max-width: 500px;
                             }
-                            h1 { color: #f44336; }
-                            .reason { color: #70799a; margin: 20px 0; }
+                            h1 { color: #f44336; margin-bottom: 20px; }
+                            .reason { color: #70799a; margin: 20px 0; font-size: 1.1rem; }
+                            .warning-count { 
+                                background: rgba(255, 193, 7, 0.1); 
+                                border: 1px solid rgba(255, 193, 7, 0.3); 
+                                border-radius: 8px; 
+                                padding: 15px; 
+                                margin: 20px 0; 
+                            }
+                            .warning-count h3 { color: #ffc107; margin: 0 0 10px 0; }
+                            .warning-count p { color: #70799a; margin: 5px 0; }
+                            .rules {
+                                text-align: left;
+                                background: rgba(255, 255, 255, 0.05);
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin: 20px 0;
+                            }
+                            .rules h3 { color: #00d4ff; margin: 0 0 10px 0; }
+                            .rules ul { color: #70799a; margin: 0; padding-left: 20px; }
+                            .rules li { margin: 5px 0; }
                         </style>
                     </head>
                     <body>
                         <div class="container">
                             <h1>⚠️ Account Suspended</h1>
                             <p class="reason">${banStatus.reason}</p>
-                            <p>Contact support if you believe this is an error.</p>
+                            
+                            <div class="warning-count">
+                                <h3>⚠️ Warnings: ${warnings.warningCount}/3</h3>
+                                ${warnings.banUntil ? `<p>Ban ends: ${new Date(warnings.banUntil).toLocaleString()}</p>` : '<p>Permanent ban</p>'}
+                            </div>
+                            
+                            <div class="rules">
+                                <h3>📋 Warning System:</h3>
+                                <ul>
+                                    <li>1 warning = 24h ban</li>
+                                    <li>2 warnings = 48h ban</li>
+                                    <li>3 warnings = Permanent ban</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="color: #70799a; margin-top: 20px;">Contact support if you believe this is an error.</p>
                         </div>
                     </body>
                     </html>
@@ -1336,7 +1373,7 @@ const server = http.createServer(async (req, res) => {
             }
             
             // Return JSON for API requests
-            sendJson(res, { error: 'Account suspended', reason: banStatus.reason }, 403);
+            sendJson(res, { error: 'Account suspended', reason: banStatus.reason, warnings: warnings }, 403);
             return;
         }
     }
