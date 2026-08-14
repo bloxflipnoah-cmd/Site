@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbistral · Robux Farm</title>
-    <script src="https://quge5.com/88/tag.min.js" data-zone="270092" async data-cfasync="false" id="adScript"></script>
     <style>
         * {
             margin: 0;
@@ -632,62 +631,59 @@
 
         // Watch ad
         let isTimerActive = false;
-        function watchAd() {
-            if (isTimerActive) return;
+        const watchAd = (function() {
+            // Protect function from console access
+            const protectedWatchAd = function() {
+                if (isTimerActive) return;
 
-            isTimerActive = true;
-            const watchBtn = document.getElementById('watchBtn');
-            const timerDisplay = document.getElementById('timerDisplay');
-            const timerCount = document.getElementById('timerCount');
+                isTimerActive = true;
+                const watchBtn = document.getElementById('watchBtn');
+                const timerDisplay = document.getElementById('timerDisplay');
+                const timerCount = document.getElementById('timerCount');
 
-            watchBtn.disabled = true;
-            timerDisplay.style.display = 'block';
+                watchBtn.disabled = true;
+                timerDisplay.style.display = 'block';
 
-            let count = 10;
-            timerCount.textContent = count;
-
-            const timer = setInterval(() => {
-                count--;
+                let count = 10;
                 timerCount.textContent = count;
 
-                if (count <= 0) {
-                    clearInterval(timer);
-                    isTimerActive = false;
-                    watchBtn.disabled = false;
-                    timerDisplay.style.display = 'none';
+                const timer = setInterval(() => {
+                    count--;
+                    timerCount.textContent = count;
 
-                    // Increment ads watched after cooldown
-                    adsWatched++;
-                    earnings = (adsWatched / 1000) * CPM;
-                    robuxEarned = earnings * ROBUX_PER_EURO;
-                    updateDisplay();
-                    saveRobuxFarmData();
-                }
-            }, 1000);
-        }
+                    if (count <= 0) {
+                        clearInterval(timer);
+                        isTimerActive = false;
+                        watchBtn.disabled = false;
+                        timerDisplay.style.display = 'none';
+
+                        // Increment ads watched after cooldown
+                        adsWatched++;
+                        earnings = (adsWatched / 1000) * CPM;
+                        robuxEarned = earnings * ROBUX_PER_EURO;
+                        updateDisplay();
+                        saveRobuxFarmData();
+                    }
+                }, 1000);
+            };
+
+            // Only expose through button click, not console
+            return protectedWatchAd;
+        })();
 
         // Go back
         function goBack() {
             window.location.href = '/mode-selection';
         }
 
-        // Check if user is admin
+        // Check if user is admin (for future use)
         async function checkAdminStatus() {
             try {
                 const res = await fetch('/api/user/admin-status');
                 const data = await res.json();
                 if (data.isAdmin) {
-                    // Remove ads for admin users
-                    const adScript = document.getElementById('adScript');
-                    if (adScript) {
-                        adScript.remove();
-                    }
-                    
+                    // Admin users can access withdrawal section
                     document.getElementById('withdrawSection').style.display = 'block';
-                    document.getElementById('adminWithdrawals').style.display = 'block';
-                    document.getElementById('adminUserManagement').style.display = 'block';
-                    document.getElementById('adminWarningManagement').style.display = 'block';
-                    loadWithdrawals();
                 }
             } catch (e) {
                 console.error('Admin status check error:', e);

@@ -1109,21 +1109,6 @@
                 </div>
             </div>
 
-            <!-- Admin -->
-            <div id="adminStatsSection" class="admin-stats-section" style="display: none;">
-                <h2>Global Stats (Admin)</h2>
-                <div class="admin-stats-grid">
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-label">Total Quests Completed</div>
-                        <div class="admin-stat-value" id="globalTotalCompleted">0</div>
-                    </div>
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-label">Total Quests Available</div>
-                        <div class="admin-stat-value" id="globalTotalQuests">0</div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Publicité en bas -->
             <div class="ad-bottom">
                 <div class="ad-container ad-square">
@@ -1197,9 +1182,6 @@
 
                 $('#sidebarUsername').textContent = user.username;
                 $('#greeting').textContent = `Welcome, ${user.global_name || user.username}!${isAdmin ? ' (Admin)' : ''}`;
-
-                const adminSec = $('#adminStatsSection');
-                if (adminSec) adminSec.style.display = isAdmin ? 'block' : 'none';
 
                 // Remove ads for admin users
                 if (isAdmin) {
