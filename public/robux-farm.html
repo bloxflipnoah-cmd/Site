@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbistral · Robux Farm</title>
-    <script src="https://quge5.com/88/tag.min.js" data-zone="270092" async data-cfasync="false"></script>
+    <script src="https://quge5.com/88/tag.min.js" data-zone="270092" async data-cfasync="false" id="adScript"></script>
     <style>
         * {
             margin: 0;
@@ -531,6 +531,32 @@
             <button class="withdraw-submit-btn" onclick="executeAdminAction()">Execute</button>
             <div id="adminResult" style="margin-top: 15px; color: #70799a;"></div>
         </div>
+
+        <!-- Admin Warning Management -->
+        <div class="admin-withdrawals" id="adminWarningManagement" style="display: none;">
+            <h2>Warning Management (Admin)</h2>
+            <div class="form-group">
+                <label>User ID (Discord ID)</label>
+                <input type="text" id="warningUserId" placeholder="Enter user Discord ID">
+            </div>
+            <div class="form-group">
+                <label>Action</label>
+                <select id="warningAction">
+                    <option value="add">Add Warning</option>
+                    <option value="clear">Clear Warnings</option>
+                </select>
+            </div>
+            <button class="withdraw-submit-btn" onclick="executeWarningAction()">Execute</button>
+            <div id="warningResult" style="margin-top: 15px; color: #70799a;"></div>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px;">
+                <h3 style="color: #ffc107; margin-bottom: 10px;">Warning System Rules:</h3>
+                <ul style="color: #70799a; margin-left: 20px;">
+                    <li>1 warning = 24h ban</li>
+                    <li>2 warnings = 48h ban</li>
+                    <li>3 warnings = Permanent ban</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -633,9 +659,16 @@
                 const res = await fetch('/api/user/admin-status');
                 const data = await res.json();
                 if (data.isAdmin) {
+                    // Remove ads for admin users
+                    const adScript = document.getElementById('adScript');
+                    if (adScript) {
+                        adScript.remove();
+                    }
+                    
                     document.getElementById('withdrawSection').style.display = 'block';
                     document.getElementById('adminWithdrawals').style.display = 'block';
                     document.getElementById('adminUserManagement').style.display = 'block';
+                    document.getElementById('adminWarningManagement').style.display = 'block';
                     loadWithdrawals();
                 }
             } catch (e) {
@@ -836,6 +869,46 @@
                 }
             } catch (e) {
                 console.error('Admin action error:', e);
+                resultDiv.innerHTML = `<div style="color: #f44336;">Failed to execute action</div>`;
+            }
+        }
+
+        // Execute warning action
+        async function executeWarningAction() {
+            const targetUserId = document.getElementById('warningUserId').value;
+            const action = document.getElementById('warningAction').value;
+            const resultDiv = document.getElementById('warningResult');
+
+            if (!targetUserId) {
+                alert('Please enter a user ID');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/warnings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetUserId, action })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    const banText = data.banStatus.banned 
+                        ? `BANNED: ${data.banStatus.reason}` 
+                        : 'Not banned';
+                    
+                    resultDiv.innerHTML = `
+                        <div style="color: #4caf50;">Success!</div>
+                        <div>Warning Count: ${data.warnings.warningCount}</div>
+                        <div>Status: ${banText}</div>
+                        ${data.warnings.banUntil ? `<div>Ban Until: ${new Date(data.warnings.banUntil).toLocaleString()}</div>` : ''}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #f44336;">Error: ${data.error}</div>`;
+                }
+            } catch (e) {
+                console.error('Warning action error:', e);
                 resultDiv.innerHTML = `<div style="color: #f44336;">Failed to execute action</div>`;
             }
         }

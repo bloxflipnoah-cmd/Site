@@ -109,6 +109,17 @@ function createSQLiteTables() {
             updatedAt DATETIME
         )
     `);
+
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS user_warnings (
+            userId TEXT PRIMARY KEY,
+            warningCount INTEGER DEFAULT 0,
+            banUntil DATETIME,
+            isPermanentlyBanned INTEGER DEFAULT 0,
+            lastWarningAt DATETIME,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
 }
 
 async function createPostgreSQLTables() {
@@ -147,6 +158,17 @@ async function createPostgreSQLTables() {
                 "status" TEXT DEFAULT 'pending',
                 "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_warnings (
+                "userId" TEXT PRIMARY KEY,
+                "warningCount" INTEGER DEFAULT 0,
+                "banUntil" TIMESTAMP,
+                "isPermanentlyBanned" INTEGER DEFAULT 0,
+                "lastWarningAt" TIMESTAMP,
+                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
     } finally {
@@ -465,6 +487,176 @@ async function saveRobuxFarmData(userId, data) {
             console.error('SQLite save robux farm data error:', error);
         }
     }
+}
+
+// =========================================================
+// WARNING/BAN SYSTEM (POSTGRESQL + SQLITE)
+// =========================================================
+
+async function getUserWarnings(userId) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                const result = await client.query(
+                    'SELECT * FROM user_warnings WHERE "userId" = $1',
+                    [userId]
+                );
+                if (result.rows.length > 0) {
+                    const row = result.rows[0];
+                    return {
+                        warningCount: row.warningCount || 0,
+                        banUntil: row.banUntil,
+                        isPermanentlyBanned: row.isPermanentlyBanned === 1,
+                        lastWarningAt: row.lastWarningAt
+                    };
+                }
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL get user warnings error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare('SELECT * FROM user_warnings WHERE userId = ?');
+            const data = stmt.get(userId);
+
+            if (data) {
+                return {
+                    warningCount: data.warningCount || 0,
+                    banUntil: data.banUntil,
+                    isPermanentlyBanned: data.isPermanentlyBanned === 1,
+                    lastWarningAt: data.lastWarningAt
+                };
+            }
+        } catch (error) {
+            console.error('SQLite get user warnings error:', error);
+        }
+    }
+
+    return { warningCount: 0, banUntil: null, isPermanentlyBanned: false, lastWarningAt: null };
+}
+
+async function addUserWarning(userId) {
+    const currentWarnings = await getUserWarnings(userId);
+    const newWarningCount = currentWarnings.warningCount + 1;
+    
+    let banUntil = null;
+    let isPermanentlyBanned = 0;
+
+    if (newWarningCount === 1) {
+        // 24h ban
+        const banDate = new Date();
+        banDate.setHours(banDate.getHours() + 24);
+        banUntil = banDate.toISOString();
+    } else if (newWarningCount === 2) {
+        // 48h ban
+        const banDate = new Date();
+        banDate.setHours(banDate.getHours() + 48);
+        banUntil = banDate.toISOString();
+    } else if (newWarningCount >= 3) {
+        // Permanent ban
+        isPermanentlyBanned = 1;
+    }
+
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    INSERT INTO user_warnings ("userId", "warningCount", "banUntil", "isPermanentlyBanned", "lastWarningAt")
+                    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+                    ON CONFLICT ("userId") DO UPDATE SET
+                        "warningCount" = EXCLUDED."warningCount",
+                        "banUntil" = EXCLUDED."banUntil",
+                        "isPermanentlyBanned" = EXCLUDED."isPermanentlyBanned",
+                        "lastWarningAt" = EXCLUDED."lastWarningAt"
+                `, [userId, newWarningCount, banUntil, isPermanentlyBanned]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL add user warning error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO user_warnings (userId, warningCount, banUntil, isPermanentlyBanned, lastWarningAt)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(userId) DO UPDATE SET
+                    warningCount = excluded.warningCount,
+                    banUntil = excluded.banUntil,
+                    isPermanentlyBanned = excluded.isPermanentlyBanned,
+                    lastWarningAt = excluded.lastWarningAt
+            `);
+            stmt.run(userId, newWarningCount, banUntil, isPermanentlyBanned);
+        } catch (error) {
+            console.error('SQLite add user warning error:', error);
+        }
+    }
+
+    return {
+        warningCount: newWarningCount,
+        banUntil,
+        isPermanentlyBanned: isPermanentlyBanned === 1
+    };
+}
+
+async function clearUserWarnings(userId) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    UPDATE user_warnings SET 
+                        "warningCount" = 0,
+                        "banUntil" = NULL,
+                        "isPermanentlyBanned" = 0
+                    WHERE "userId" = $1
+                `, [userId]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL clear user warnings error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                UPDATE user_warnings SET 
+                    warningCount = 0,
+                    banUntil = NULL,
+                    isPermanentlyBanned = 0
+                WHERE userId = ?
+            `);
+            stmt.run(userId);
+        } catch (error) {
+            console.error('SQLite clear user warnings error:', error);
+        }
+    }
+}
+
+async function isUserBanned(userId) {
+    const warnings = await getUserWarnings(userId);
+    
+    // Check permanent ban
+    if (warnings.isPermanentlyBanned) {
+        return { banned: true, reason: 'Permanently banned', banUntil: null };
+    }
+    
+    // Check temporary ban
+    if (warnings.banUntil) {
+        const banUntil = new Date(warnings.banUntil);
+        const now = new Date();
+        
+        if (now < banUntil) {
+            const hoursRemaining = Math.ceil((banUntil - now) / (1000 * 60 * 60));
+            return { banned: true, reason: `Temporary ban (${hoursRemaining}h remaining)`, banUntil: warnings.banUntil };
+        }
+    }
+    
+    return { banned: false, reason: null, banUntil: null };
 }
 
 // =========================================================
@@ -1090,6 +1282,63 @@ const server = http.createServer(async (req, res) => {
     let session = await getSession(sessionId);
     if (!session) {
         session = sessions.get(sessionId);
+    }
+
+    // Check if user is banned (skip for admin users)
+    if (session && !ADMIN_DISCORD_IDS.includes(session.userId)) {
+        const banStatus = await isUserBanned(session.userId);
+        if (banStatus.banned) {
+            console.log(`[BAN] User ${session.userId} is banned: ${banStatus.reason}`);
+            
+            // Show ban page for HTML requests
+            if (req.method === 'GET' && (pathname.endsWith('.html') || pathname === '/' || !pathname.includes('.'))) {
+                res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.end(`
+                    <!DOCTYPE html>
+                    <html lang="fr">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Account Suspended</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background: #02030a;
+                                color: white;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                margin: 0;
+                            }
+                            .container {
+                                text-align: center;
+                                padding: 40px;
+                                background: rgba(7, 10, 31, 0.67);
+                                border: 1px solid rgba(120, 140, 255, 0.12);
+                                border-radius: 15px;
+                                max-width: 500px;
+                            }
+                            h1 { color: #f44336; }
+                            .reason { color: #70799a; margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1>⚠️ Account Suspended</h1>
+                            <p class="reason">${banStatus.reason}</p>
+                            <p>Contact support if you believe this is an error.</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                return;
+            }
+            
+            // Return JSON for API requests
+            sendJson(res, { error: 'Account suspended', reason: banStatus.reason }, 403);
+            return;
+        }
     }
 
 
@@ -2201,6 +2450,75 @@ const server = http.createServer(async (req, res) => {
 
         } catch (error) {
             console.error('Admin robux farm error:', error);
+            sendJson(res, { error: 'Failed to process request' }, 500);
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // ADMIN API - WARNING MANAGEMENT
+    // =====================================================
+
+    if (
+        pathname === '/api/admin/warnings' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(res, { error: 'Unauthorized' }, 401);
+            return;
+        }
+
+        // Check if user is admin
+        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+            sendJson(res, { error: 'Forbidden - Admin only' }, 403);
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { targetUserId, action } = JSON.parse(body);
+
+                    if (!targetUserId || !action) {
+                        sendJson(res, { error: 'Missing required fields: targetUserId, action' }, 400);
+                        return;
+                    }
+
+                    let result;
+                    if (action === 'add') {
+                        result = await addUserWarning(targetUserId);
+                        console.log(`[ADMIN] User ${session.userId} added warning to user ${targetUserId}. New count: ${result.warningCount}`);
+                    } else if (action === 'clear') {
+                        await clearUserWarnings(targetUserId);
+                        result = { warningCount: 0, banUntil: null, isPermanentlyBanned: false };
+                        console.log(`[ADMIN] User ${session.userId} cleared warnings for user ${targetUserId}`);
+                    } else {
+                        sendJson(res, { error: 'Invalid action. Must be: add or clear' }, 400);
+                        return;
+                    }
+
+                    const currentWarnings = await getUserWarnings(targetUserId);
+                    const banStatus = await isUserBanned(targetUserId);
+
+                    sendJson(res, {
+                        success: true,
+                        warnings: currentWarnings,
+                        banStatus: banStatus
+                    });
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(res, { error: 'Failed to process request' }, 500);
+                }
+            });
+
+        } catch (error) {
+            console.error('Admin warnings error:', error);
             sendJson(res, { error: 'Failed to process request' }, 500);
         }
 
