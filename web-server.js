@@ -33,7 +33,7 @@ function isAdminUser(userId, username) {
 // Robux farm constants
 const ROBUX_PRICE = 1.50; // € for 200 Robux
 const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
-const CPM = 0.20; // € per 1000 views
+const CPM = 0.30; // € per 1000 views
 
 // =========================================================
 // DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
@@ -507,8 +507,8 @@ async function saveRobuxFarmData(userId, data) {
     }
     
     // Check mathematical consistency
-    const expectedEarnings = (adsWatched / 1000) * 0.20; // CPM = 0.20
-    const expectedRobux = expectedEarnings * (200 / 1.50); // ROBUX_PER_EURO
+    const expectedEarnings = (adsWatched / 1000) * CPM;
+    const expectedRobux = expectedEarnings * ROBUX_PER_EURO;
     
     // Allow small margin of error for floating point arithmetic
     const earningsDiff = Math.abs(earnings - expectedEarnings);
