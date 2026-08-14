@@ -1811,6 +1811,42 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
+    // ADMIN PANEL
+    // =====================================================
+
+    if (
+        pathname === '/admin' ||
+        pathname === '/admin.html'
+    ) {
+
+        if (!session) {
+
+            res.writeHead(
+                302,
+                {
+                    'Location': '/login'
+                }
+            );
+
+            res.end();
+
+            return;
+        }
+
+        sendFile(
+            res,
+            path.join(
+                __dirname,
+                'public',
+                'admin.html'
+            )
+        );
+
+        return;
+    }
+
+
+    // =====================================================
     // DASHBOARD
     // =====================================================
 

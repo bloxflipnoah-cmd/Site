@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbistral · Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background: #02030a;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 72% 28%, rgba(48, 70, 255, .16), transparent 30%),
+                radial-gradient(circle at 22% 72%, rgba(0, 220, 255, .08), transparent 28%),
+                linear-gradient(180deg, rgba(1, 2, 10, .30), rgba(1, 2, 10, .86));
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: linear-gradient(110deg, #ffd700, #ffaa00);
+            color: #02030a;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .admin-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .admin-section {
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .admin-section h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #858eaf;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(110deg, #ffd700, #ffaa00);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            color: #02030a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: #70799a;
+            font-size: 14px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #858eaf;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="goBack()">← Back</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>👑 Admin Panel</h1>
+            <span class="admin-badge">ADMINISTRATOR</span>
+        </div>
+
+        <div class="admin-sections">
+            <!-- User Management -->
+            <div class="admin-section">
+                <h2>👤 User Management</h2>
+                <div class="form-group">
+                    <label>User ID (Discord ID)</label>
+                    <input type="text" id="targetUserId" placeholder="Enter user Discord ID">
+                </div>
+                <div class="form-group">
+                    <label>Action</label>
+                    <select id="adminAction" onchange="toggleAdminFields()">
+                        <option value="add">➕ Add Robux</option>
+                        <option value="set">⚙️ Set Values</option>
+                        <option value="reset">🔄 Reset Account</option>
+                    </select>
+                </div>
+                <div class="form-group" id="addRobuxField">
+                    <label>Robux to Add</label>
+                    <input type="number" id="addRobuxAmount" placeholder="Enter amount" min="0" step="0.01">
+                </div>
+                <div class="form-group" id="setValuesFields" style="display: none;">
+                    <label>Ads Watched</label>
+                    <input type="number" id="setAdsWatched" placeholder="Enter ads count" min="0" style="margin-bottom: 10px;">
+                    <label>Earnings (€)</label>
+                    <input type="number" id="setEarnings" placeholder="Enter earnings" min="0" step="0.01" style="margin-bottom: 10px;">
+                    <label>Robux Earned</label>
+                    <input type="number" id="setRobuxEarned" placeholder="Enter robux" min="0" step="0.01">
+                </div>
+                <button class="btn" onclick="executeAdminAction()">⚡ Execute Action</button>
+                <div class="result-box" id="adminResult"></div>
+            </div>
+
+            <!-- Warning Management -->
+            <div class="admin-section">
+                <h2>⚠️ Warning Management</h2>
+                <div class="form-group">
+                    <label>User ID (Discord ID)</label>
+                    <input type="text" id="warningUserId" placeholder="Enter user Discord ID">
+                </div>
+                <div class="form-group">
+                    <label>Action</label>
+                    <select id="warningAction">
+                        <option value="add">⚠️ Add Warning</option>
+                        <option value="clear">✅ Clear Warnings</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="executeWarningAction()">⚡ Execute Action</button>
+                <div class="result-box" id="warningResult"></div>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px;">
+                    <h3 style="color: #ffc107; margin-bottom: 10px; font-size: 14px;">📋 Warning System Rules:</h3>
+                    <ul style="color: #70799a; margin-left: 20px; font-size: 13px;">
+                        <li style="margin-bottom: 5px;">1 warning = 24h ban</li>
+                        <li style="margin-bottom: 5px;">2 warnings = 48h ban</li>
+                        <li>3 warnings = Permanent ban</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Withdrawals Management -->
+            <div class="admin-section">
+                <h2>💰 Withdrawals Management</h2>
+                <button class="btn" onclick="loadWithdrawals()">🔄 Refresh Withdrawals</button>
+                <div class="result-box" id="withdrawalsList" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- Server Stats -->
+            <div class="admin-section">
+                <h2>📊 Server Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeSessions">0</div>
+                        <div class="stat-label">Active Sessions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalWithdrawals">0</div>
+                        <div class="stat-label">Total Withdrawals</div>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadStats()">🔄 Refresh Stats</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check admin status
+        async function checkAdminStatus() {
+            try {
+                const res = await fetch('/api/user/admin-status');
+                const data = await res.json();
+                if (!data.isAdmin) {
+                    window.location.href = '/mode-selection';
+                }
+            } catch (e) {
+                console.error('Admin status check error:', e);
+                window.location.href = '/mode-selection';
+            }
+        }
+
+        // Toggle admin fields
+        function toggleAdminFields() {
+            const action = document.getElementById('adminAction').value;
+            document.getElementById('addRobuxField').style.display = action === 'add' ? 'block' : 'none';
+            document.getElementById('setValuesFields').style.display = action === 'set' ? 'block' : 'none';
+        }
+
+        // Execute admin action
+        async function executeAdminAction() {
+            const targetUserId = document.getElementById('targetUserId').value;
+            const action = document.getElementById('adminAction').value;
+            const resultDiv = document.getElementById('adminResult');
+
+            if (!targetUserId) {
+                resultDiv.innerHTML = '<div style="color: #f44336;">Please enter a user ID</div>';
+                return;
+            }
+
+            let requestBody = { targetUserId, action };
+
+            if (action === 'add') {
+                const amount = parseFloat(document.getElementById('addRobuxAmount').value);
+                if (isNaN(amount)) {
+                    resultDiv.innerHTML = '<div style="color: #f44336;">Please enter a valid amount</div>';
+                    return;
+                }
+                requestBody.amount = amount;
+            } else if (action === 'set') {
+                requestBody.adsWatched = parseInt(document.getElementById('setAdsWatched').value) || 0;
+                requestBody.earnings = parseFloat(document.getElementById('setEarnings').value) || 0;
+                requestBody.robuxEarned = parseFloat(document.getElementById('setRobuxEarned').value) || 0;
+            }
+
+            try {
+                const res = await fetch('/api/admin/robux-farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div style="color: #4caf50;">Success!</div>
+                        <div>Previous: Ads: ${data.previousData.adsWatched}, Earnings: €${data.previousData.earnings.toFixed(2)}, Robux: ${data.previousData.robuxEarned.toFixed(2)}</div>
+                        <div>New: Ads: ${data.newData.adsWatched}, Earnings: €${data.newData.earnings.toFixed(2)}, Robux: ${data.newData.robuxEarned.toFixed(2)}</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #f44336;">Error: ${data.error}</div>`;
+                }
+            } catch (e) {
+                console.error('Admin action error:', e);
+                resultDiv.innerHTML = '<div style="color: #f44336;">Failed to execute action</div>';
+            }
+        }
+
+        // Execute warning action
+        async function executeWarningAction() {
+            const targetUserId = document.getElementById('warningUserId').value;
+            const action = document.getElementById('warningAction').value;
+            const resultDiv = document.getElementById('warningResult');
+
+            if (!targetUserId) {
+                resultDiv.innerHTML = '<div style="color: #f44336;">Please enter a user ID</div>';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/warnings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetUserId, action })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    const banText = data.banStatus.banned 
+                        ? `BANNED: ${data.banStatus.reason}` 
+                        : 'Not banned';
+                    
+                    resultDiv.innerHTML = `
+                        <div style="color: #4caf50;">Success!</div>
+                        <div>Warning Count: ${data.warnings.warningCount}</div>
+                        <div>Ban Status: ${banText}</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #f44336;">Error: ${data.error}</div>`;
+                }
+            } catch (e) {
+                console.error('Warning action error:', e);
+                resultDiv.innerHTML = '<div style="color: #f44336;">Failed to execute action</div>';
+            }
+        }
+
+        // Load withdrawals
+        async function loadWithdrawals() {
+            const listDiv = document.getElementById('withdrawalsList');
+            listDiv.innerHTML = 'Loading...';
+
+            try {
+                const res = await fetch('/api/admin/withdrawals');
+                const data = await res.json();
+
+                if (data.withdrawals && data.withdrawals.length > 0) {
+                    listDiv.innerHTML = data.withdrawals.map(w => `
+                        <div style="padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; margin-bottom: 5px;">
+                            <div><strong>User:</strong> ${w.userId}</div>
+                            <div><strong>Amount:</strong> ${w.amount} Robux</div>
+                            <div><strong>Gamepass:</strong> ${w.gamepassId}</div>
+                            <div><strong>Status:</strong> ${w.status}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = 'No withdrawals found';
+                }
+            } catch (e) {
+                console.error('Load withdrawals error:', e);
+                listDiv.innerHTML = 'Failed to load withdrawals';
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/quests');
+                const data = await res.json();
+                
+                if (data.globalStats) {
+                    document.getElementById('totalUsers').textContent = data.globalStats.totalQuests || 0;
+                    document.getElementById('activeSessions').textContent = data.globalStats.totalCompleted || 0;
+                }
+            } catch (e) {
+                console.error('Load stats error:', e);
+            }
+        }
+
+        // Go back
+        function goBack() {
+            window.location.href = '/mode-selection';
+        }
+
+        // Initialize
+        checkAdminStatus();
+        loadWithdrawals();
+        loadStats();
+    </script>
+</body>
+</html>
