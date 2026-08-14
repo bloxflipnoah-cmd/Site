@@ -200,6 +200,76 @@
             background: linear-gradient(135deg, #88ff00, #00cc66, #00ff88);
         }
 
+        /* Gold facets for Admin orb */
+        .admin .facet-1 {
+            background: linear-gradient(135deg, #ffd700, #ffaa00 40%, #ff8800);
+        }
+        .admin .facet-2 {
+            background: linear-gradient(180deg, #ffcc00, #ffaa00 45%, #ffd700);
+        }
+        .admin .facet-3 {
+            background: linear-gradient(135deg, #ffd700, #ffaa00 40%, #ff8800);
+        }
+        .admin .facet-4 {
+            background: linear-gradient(135deg, #ffaa00, #ffcc00, #ffd700);
+        }
+        .admin .facet-5 {
+            background: linear-gradient(160deg, #ffdd00, #ffaa00 45%, #ff8800);
+        }
+        .admin .facet-6 {
+            background: linear-gradient(90deg, #ffd700, #ffaa00, #ffcc00);
+        }
+        .admin .facet-7 {
+            background: linear-gradient(135deg, #ffcc00, #ffaa00, #ffd700);
+        }
+
+        .admin .stat-light {
+            background: radial-gradient(circle, rgba(255, 215, 0, .2) 0%, rgba(255, 170, 0, .08) 35%, transparent 70%);
+        }
+
+        .admin .orb:hover .stat-light {
+            background: radial-gradient(circle, rgba(255, 215, 0, .35) 0%, rgba(255, 180, 0, .15) 35%, transparent 70%);
+        }
+
+        .admin .orb::before {
+            background: conic-gradient(from 20deg, #ffd700, #ffaa00, #ff8800, #ffcc00, #ffd700, #ffd700);
+        }
+
+        .admin .stat-star {
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 12px #ffd700, 0 0 20px #ffaa00;
+        }
+
+        .admin .orb:hover .stat-star {
+            text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #ffdd00, 0 0 35px #ffbb00;
+        }
+
+        .admin .mode-card {
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .admin .mode-card:hover {
+            border-color: #ffd700;
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+        }
+
+        .admin-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(110deg, #ffd700, #ffaa00);
+            color: #02030a;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 25;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        #adminMode {
+            display: none;
+        }
+
         .robux-farm .stat-light {
             background: radial-gradient(circle, rgba(0, 255, 136, .2) 0%, rgba(0, 200, 100, .08) 35%, transparent 70%);
         }
@@ -393,17 +463,56 @@
                     Watch ads to earn Robux. Generate revenue by viewing advertisements.
                 </div>
             </div>
+
+            <div class="mode-card admin" id="adminMode" onclick="selectMode('admin')">
+                <div class="admin-badge">ADMIN</div>
+                <div class="mode-icon">
+                    <div class="orb">
+                        <div class="facet-1"></div>
+                        <div class="facet-2"></div>
+                        <div class="facet-3"></div>
+                        <div class="facet-4"></div>
+                        <div class="facet-5"></div>
+                        <div class="facet-6"></div>
+                        <div class="facet-7"></div>
+                        <div class="stat-light"></div>
+                        <div class="stat-star">👑</div>
+                        <div class="stat-shine"></div>
+                    </div>
+                </div>
+                <div class="mode-title">Admin Panel</div>
+                <div class="mode-description">
+                    Manage users, warnings, and withdrawals. Full administrative control.
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        async function checkAdminStatus() {
+            try {
+                const res = await fetch('/api/user/admin-status');
+                const data = await res.json();
+                if (data.isAdmin) {
+                    document.getElementById('adminMode').style.display = 'block';
+                }
+            } catch (e) {
+                console.error('Admin status check error:', e);
+            }
+        }
+
         function selectMode(mode) {
             if (mode === 'autoquest') {
                 window.location.href = '/dashboard?from=selection';
             } else if (mode === 'robuxfarm') {
                 window.location.href = '/robux-farm?from=selection';
+            } else if (mode === 'admin') {
+                window.location.href = '/robux-farm?from=selection';
             }
         }
+
+        // Check admin status on page load
+        checkAdminStatus();
     </script>
 </body>
 </html>
