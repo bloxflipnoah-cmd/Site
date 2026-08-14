@@ -30,6 +30,11 @@ function isAdminUser(userId, username) {
     return ADMIN_DISCORD_IDS.includes(userId) || ADMIN_USERNAMES.includes(username);
 }
 
+// Robux farm constants
+const ROBUX_PRICE = 1.50; // € for 200 Robux
+const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
+const CPM = 0.20; // € per 1000 views
+
 // =========================================================
 // DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
 // =========================================================
