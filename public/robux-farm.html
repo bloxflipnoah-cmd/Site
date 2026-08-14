@@ -466,8 +466,8 @@
 
         <div class="progress-section">
             <div class="progress-label">
-                <span>Progress to 200 Robux</span>
-                <span id="currentRobux">0</span> / 200 Robux
+                <span>Progress to 50 Robux</span>
+                <span id="currentRobux">0</span> / 50 Robux
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
@@ -495,12 +495,12 @@
                     <input type="text" id="psdInput" placeholder="Enter your PSD">
                 </div>
                 <div class="form-group">
-                    <label>Gamepass ID (200 Robux)</label>
+                    <label>Gamepass ID (50 Robux)</label>
                     <input type="text" id="gamepassInput" placeholder="Enter gamepass ID">
                 </div>
                 <div class="form-group">
-                    <label>Amount (Min: 200 Robux)</label>
-                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="200" step="1">
+                    <label>Amount (Min: 50 Robux)</label>
+                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="50" step="1">
                 </div>
                 <button class="withdraw-submit-btn" onclick="submitWithdraw()">Submit Withdraw</button>
             </div>
@@ -580,8 +580,8 @@
     <script>
         // Constants
         const CPM = 0.30; // € per 1000 views
-        const ROBUX_PRICE = 1.50; // € for 200 Robux
-        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
+        const ROBUX_PRICE = 1.00; // € for 200 Robux
+        const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // 200 Robux per €
         // 50% profit margin: 75 views per Robux (15000 views for 200 Robux)
         const VIEWS_PER_ROBUX = 75;
 
@@ -625,7 +625,7 @@
             document.getElementById('earningsValue').textContent = '€' + earnings.toFixed(2);
             document.getElementById('robuxValue').textContent = robuxEarned.toFixed(2);
 
-            const progress = Math.min((robuxEarned / 200) * 100, 100);
+            const progress = Math.min((robuxEarned / 50) * 100, 100);
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('currentRobux').textContent = robuxEarned.toFixed(2);
         }
@@ -713,8 +713,8 @@
                 return;
             }
 
-            if (robuxAmount < 200) {
-                alert('Minimum withdrawal is 200 Robux');
+            if (robuxAmount < 50) {
+                alert('Minimum withdrawal is 50 Robux');
                 return;
             }
 

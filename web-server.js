@@ -31,8 +31,8 @@ function isAdminUser(userId, username) {
 }
 
 // Robux farm constants
-const ROBUX_PRICE = 1.50; // € for 200 Robux
-const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // ~133.33 Robux per €
+const ROBUX_PRICE = 1.00; // € for 200 Robux
+const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // 200 Robux per €
 const CPM = 0.30; // € per 1000 views
 
 // =========================================================
