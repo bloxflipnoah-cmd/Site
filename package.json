@@ -4,13 +4,14 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --env-file=.env src/index.js"
+    "start": "node web-server.js",
+    "dev": "node --env-file=.env web-server.js"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "better-sqlite3": "^9.4.3",
     "discord.js": "^14.26.0",
     "dotenv": "^17.4.0"
   }
