@@ -2935,10 +2935,10 @@ const server = http.createServer(async (req, res) => {
                         return;
                     }
 
-                    if (robuxAmount < 200) {
+                    if (robuxAmount < 50) {
                         sendJson(
                             res,
-                            { error: 'Minimum withdrawal is 200 Robux' },
+                            { error: 'Minimum withdrawal is 50 Robux' },
                             400
                         );
                         return;
