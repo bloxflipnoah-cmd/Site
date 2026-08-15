@@ -263,6 +263,49 @@
             background: linear-gradient(135deg, #ffcc00, #ffaa00, #ffd700);
         }
 
+        /* Red/Purple facets for Casino orb */
+        .casino .facet-1 {
+            background: linear-gradient(135deg, #ff0066, #cc0044 40%, #990033);
+        }
+        .casino .facet-2 {
+            background: linear-gradient(180deg, #ff3388, #cc0044 45%, #ff0066);
+        }
+        .casino .facet-3 {
+            background: linear-gradient(135deg, #ff0066, #cc0044 40%, #990033);
+        }
+        .casino .facet-4 {
+            background: linear-gradient(135deg, #cc0044, #ff3388, #ff0066);
+        }
+        .casino .facet-5 {
+            background: linear-gradient(160deg, #ff0088, #cc0044 45%, #990033);
+        }
+        .casino .facet-6 {
+            background: linear-gradient(90deg, #ff0066, #cc0044, #ff3388);
+        }
+        .casino .facet-7 {
+            background: linear-gradient(135deg, #ff3388, #cc0044, #ff0066);
+        }
+
+        .casino .stat-light {
+            background: radial-gradient(circle, rgba(255, 0, 102, .2) 0%, rgba(204, 0, 68, .08) 35%, transparent 70%);
+        }
+
+        .casino .orb:hover .stat-light {
+            background: radial-gradient(circle, rgba(255, 0, 102, .35) 0%, rgba(220, 0, 80, .15) 35%, transparent 70%);
+        }
+
+        .casino .orb::before {
+            background: conic-gradient(from 20deg, #ff0066, #cc0044, #ff3388, #ff0088, #ff0066, #ff0066);
+        }
+
+        .casino .stat-star {
+            text-shadow: 0 0 2px white, 0 0 6px white, 0 0 12px #ff0066, 0 0 20px #cc0044;
+        }
+
+        .casino .orb:hover .stat-star {
+            text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #ff3388, 0 0 35px #dd0055;
+        }
+
         .admin .stat-light {
             background: radial-gradient(circle, rgba(255, 215, 0, .2) 0%, rgba(255, 170, 0, .08) 35%, transparent 70%);
         }
@@ -416,10 +459,22 @@
 
         .robux-symbol {
             position: absolute;
-            top: 50%;
             left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
             font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .casino-symbol {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
             font-weight: bold;
             color: white;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -532,6 +587,28 @@
                 </div>
             </div>
 
+            <div class="mode-card casino" onclick="selectMode('casino')">
+                <div class="mode-icon">
+                    <div class="orb">
+                        <div class="facet-1"></div>
+                        <div class="facet-2"></div>
+                        <div class="facet-3"></div>
+                        <div class="facet-4"></div>
+                        <div class="facet-5"></div>
+                        <div class="facet-6"></div>
+                        <div class="facet-7"></div>
+                        <div class="stat-light"></div>
+                        <div class="stat-star">★</div>
+                        <div class="stat-shine"></div>
+                        <div class="casino-symbol">🎰</div>
+                    </div>
+                </div>
+                <div class="mode-title">Casino Robux</div>
+                <div class="mode-description">
+                    Play casino games to win Robux. Test your luck and multiply your earnings.
+                </div>
+            </div>
+
             <div class="mode-card admin" id="adminMode" onclick="selectMode('admin')">
                 <div class="admin-badge">ADMIN</div>
                 <div class="mode-icon">
@@ -583,6 +660,8 @@
                 window.location.href = '/dashboard?from=selection';
             } else if (mode === 'robuxfarm') {
                 window.location.href = '/robux-farm?from=selection';
+            } else if (mode === 'casino') {
+                window.location.href = '/casino?from=selection';
             } else if (mode === 'admin') {
                 window.location.href = '/admin?from=selection';
             }
