@@ -13,6 +13,7 @@
   "dependencies": {
     "better-sqlite3": "^9.4.3",
     "discord.js": "^14.26.0",
-    "dotenv": "^17.4.0"
+    "dotenv": "^17.4.0",
+    "pg": "^8.11.3"
   }
 }
