@@ -4,11 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orbistral</title>
+  
+  <!-- Monetag -->
+  <meta name="monetag" content="70ea34911f3c08572023593bade51743">
+  
   <style>
     /* =========================================================
-       LOGIN PAGE STYLES
+       ORBISTRAL design system — deep-space console
        ========================================================= */
     :root {
+      --radius: 1.1rem;
+      --radius-sm: calc(var(--radius) - 4px);
+      --radius-md: calc(var(--radius) - 2px);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) + 4px);
+      --radius-2xl: calc(var(--radius) + 8px);
+
+      --background: oklch(0.14 0.035 267);
+      --foreground: oklch(0.96 0.012 260);
+      --card: oklch(0.19 0.045 268 / 0.72);
+      --card-foreground: oklch(0.96 0.012 260);
+      --primary: oklch(0.72 0.16 232);
+      --primary-foreground: oklch(0.15 0.04 265);
+      --secondary: oklch(0.26 0.05 268);
+      --secondary-foreground: oklch(0.94 0.015 260);
+      --muted: oklch(0.24 0.045 268);
+      --muted-foreground: oklch(0.68 0.035 265);
+      --accent: oklch(0.58 0.2 275);
+      --accent-foreground: oklch(0.98 0.01 260);
+      --destructive: oklch(0.64 0.22 15);
+      --destructive-foreground: oklch(0.98 0.01 260);
+      --border: oklch(0.72 0.12 260 / 0.16);
+      --input: oklch(0.72 0.12 260 / 0.2);
+      --ring: oklch(0.72 0.16 232);
+      --gold: oklch(0.85 0.16 88);
+      --gold-foreground: oklch(0.2 0.05 60);
+      --success: oklch(0.78 0.17 160);
+      --cyan: oklch(0.82 0.14 205);
+      --nebula: oklch(0.62 0.24 320);
+
       --orb-size: 285px;
       --orb-glow: rgba(0, 210, 255, 0.55);
       --bg-deep: #02030a;
@@ -28,9 +62,9 @@
     body {
       width: 100%;
       min-height: 100vh;
-      background: var(--bg-deep);
+      background: var(--background);
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-      color: #fff;
+      color: var(--foreground);
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
@@ -41,7 +75,11 @@
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background: radial-gradient(circle at 50% 40%, #101650 0%, #05071b 42%, #020209 75%, #000 100%);
+      background:
+        radial-gradient(circle at 72% 12%, oklch(0.5 0.2 275 / 0.28), transparent 42%),
+        radial-gradient(circle at 12% 78%, oklch(0.7 0.15 205 / 0.16), transparent 40%),
+        radial-gradient(circle at 50% 120%, oklch(0.7 0.18 330 / 0.12), transparent 45%),
+        linear-gradient(160deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
     }
 
     .star {
@@ -111,11 +149,11 @@
       right: 30px;
       width: 48px;
       height: 48px;
-      border: 1px solid rgba(120, 140, 255, 0.2);
-      border-radius: 12px;
-      background: rgba(62, 104, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--secondary);
       transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(18px);
       animation: slideInRight 0.8s ease both;
       display: flex;
       align-items: center;
@@ -468,30 +506,26 @@
     }
 
     .discord-logo:hover {
-      background: rgba(62, 104, 255, 0.2);
-      border-color: rgba(120, 140, 255, 0.4);
-      transform: translateY(-2px);
+      transform: scale(1.1);
+      border-color: var(--primary);
+      background: var(--accent);
     }
 
     /* ORB CARD */
     .cookie-orb-card {
       position: relative;
       margin: 20px auto;
-      animation: orbAppear 1.2s ease both;
+      animation: rise 1.2s ease both;
     }
 
-    @keyframes orbAppear {
+    @keyframes rise {
       0% {
         opacity: 0;
-        transform: scale(0.5);
-      }
-      60% {
-        opacity: 0.9;
-        transform: scale(1.05);
+        transform: translateY(22px);
       }
       100% {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0);
       }
     }
 
@@ -502,13 +536,13 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(0, 229, 255, 0.15), transparent 70%);
-      filter: blur(40px);
-      z-index: 0;
-      animation: auraPulse 4s ease-in-out infinite, auraAppear 1s ease both;
+      background: radial-gradient(circle, var(--cyan), transparent 70%);
+      border-radius: 50%;
+      animation: pulse 3s ease-in-out infinite;
+      pointer-events: none;
     }
 
-    @keyframes auraPulse {
+    @keyframes pulse {
       0%, 100% {
         opacity: 0.6;
         transform: translate(-50%, -50%) scale(1);
@@ -618,54 +652,33 @@
       position: relative;
       width: var(--orb-size);
       height: var(--orb-size);
-      overflow: hidden;
-      clip-path: polygon(
-        50% 0%,
-        69% 5%,
-        87% 17%,
-        97% 38%,
-        94% 62%,
-        82% 82%,
-        62% 96%,
-        39% 100%,
-        18% 88%,
-        6% 68%,
-        2% 47%,
-        9% 25%,
-        25% 9%
-      );
-      background: radial-gradient(
-        circle at 48% 42%,
-        #173bd0 0%,
-        #10299c 25%,
-        #071557 55%,
-        #030726 82%,
-        #010113 100%
-      );
-      box-shadow:
-        0 0 12px rgba(0, 229, 255, .95),
-        0 0 28px rgba(0, 174, 255, .65),
-        0 0 60px rgba(73, 29, 255, .45);
-      transform: rotate(-2deg);
-      animation: float 6s ease-in-out infinite;
-      z-index: 1;
+      margin: 0 auto;
+      cursor: pointer;
+      transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s ease;
+      clip-path: polygon(50% 0%, 69% 5%, 87% 17%, 97% 38%, 94% 62%, 82% 82%, 62% 96%, 39% 100%, 18% 88%, 6% 68%, 2% 47%, 9% 25%, 25% 9%);
+      background: radial-gradient(circle at 48% 42%, #173bd0 0%, #10299c 25%, #071557 55%, #030726 82%, #010113 100%);
+      box-shadow: 0 0 8px var(--orb-glow), 0 0 16px var(--cyan), 0 0 32px var(--primary);
+      animation: orbIdle 6s ease-in-out infinite;
     }
 
-    @keyframes float {
+    @keyframes orbIdle {
       0%, 100% {
         transform: rotate(-2deg) translateY(0);
       }
-      50% {
-        transform: rotate(-2deg) translateY(-15px);
+      30% {
+        transform: rotate(-1deg) translateY(-6px);
+      }
+      60% {
+        transform: rotate(-2.5deg) translateY(-2px);
       }
     }
 
     .orb:hover {
       transform: rotate(-2deg) scale(1.05);
       box-shadow:
-        0 0 20px rgba(0, 229, 255, 1),
-        0 0 40px rgba(0, 174, 255, .8),
-        0 0 80px rgba(73, 29, 255, .6);
+        0 0 20px var(--cyan),
+        0 0 40px var(--primary),
+        0 0 80px var(--nebula);
     }
 
     /* FACETS */
@@ -680,29 +693,22 @@
       width: 145px;
       height: 140px;
       left: -15px;
-      top: 25px;
-      background: linear-gradient(135deg, #00ffdc, #0085ff 50%, #1d38e8);
-      clip-path: polygon(0 18%, 52% 0, 100% 35%, 80% 75%, 30% 100%, 8% 62%);
     }
 
     .facet-2 {
-      width: 95px;
-      height: 170px;
-      left: 10px;
-      top: 90px;
-      background: linear-gradient(180deg, #ff00d4, #a700ff 45%, #006fff);
-      clip-path: polygon(45% 0, 100% 35%, 76% 100%, 10% 72%, 0 25%);
-      opacity: .7;
+      width: 60px;
+      height: 60px;
+      bottom: 20%;
+      right: 15%;
+      background: radial-gradient(circle, var(--cyan), transparent 70%);
     }
 
     .facet-3 {
-      width: 175px;
-      height: 130px;
-      left: 75px;
-      top: -8px;
-      background: linear-gradient(135deg, #00e8ff, #164cff 40%, #2529c9);
-      clip-path: polygon(20% 0, 70% 10%, 100% 55%, 56% 100%, 0 62%);
-      opacity: .65;
+      width: 40px;
+      height: 40px;
+      top: 50%;
+      right: 25%;
+      background: radial-gradient(circle, var(--nebula), transparent 70%);
     }
 
     .facet-4 {
@@ -710,7 +716,7 @@
       height: 175px;
       right: -5px;
       top: 20px;
-      background: linear-gradient(135deg, #6428ff, #ff31db, #813eff);
+      background: linear-gradient(135deg, var(--primary), var(--nebula), var(--primary));
       clip-path: polygon(20% 0, 100% 22%, 85% 72%, 48% 100%, 0 70%, 35% 38%);
       opacity: .72;
     }
@@ -720,7 +726,7 @@
       height: 150px;
       right: -20px;
       top: 110px;
-      background: linear-gradient(160deg, #00dfff, #0645ff 45%, #531dff);
+      background: linear-gradient(160deg, var(--cyan), var(--primary) 45%, var(--primary));
       clip-path: polygon(35% 0, 100% 25%, 90% 75%, 50% 100%, 0 55%);
       opacity: .6;
     }
@@ -730,7 +736,7 @@
       height: 110px;
       left: 60px;
       bottom: -12px;
-      background: linear-gradient(90deg, #00e8d5, #006aff, #b830ff);
+      background: linear-gradient(90deg, var(--cyan), var(--primary), var(--nebula));
       clip-path: polygon(0 35%, 35% 0, 75% 18%, 100% 62%, 65% 100%, 22% 82%);
       opacity: .72;
     }
@@ -740,7 +746,7 @@
       height: 110px;
       right: 30px;
       bottom: 8px;
-      background: linear-gradient(135deg, #ff2bd6, #7632ff, #00eaff);
+      background: linear-gradient(135deg, var(--nebula), var(--primary), var(--cyan));
       clip-path: polygon(10% 20%, 62% 0, 100% 50%, 55% 100%, 0 72%);
       opacity: .55;
     }
@@ -751,14 +757,31 @@
       position: absolute;
       inset: 0;
       background: conic-gradient(
-        from 20deg,
-        #00ffe1,
-        #0077ff,
-        #ff1bd8,
-        #7534ff,
-        #00d9ff,
-        #00ffe1
+        from 180deg,
+        var(--cyan),
+        var(--primary),
+        var(--nebula),
+        var(--cyan)
       );
+      clip-path: polygon(50% 0%, 69% 5%, 87% 17%, 97% 38%, 94% 62%, 82% 82%, 62% 96%, 39% 100%, 18% 88%, 6% 68%, 2% 47%, 9% 25%, 25% 9%);
+      animation: borderGlow 4s linear infinite;
+      opacity: 0.7;
+    }
+
+    .orb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: conic-gradient(
+        from 180deg,
+        var(--cyan),
+        var(--primary),
+        var(--nebula),
+        var(--cyan)
+      );
+      clip-path: polygon(50% 0%, 69% 5%, 87% 17%, 97% 38%, 94% 62%, 82% 82%, 62% 96%, 39% 100%, 18% 88%, 6% 68%, 2% 47%, 9% 25%, 25% 9%);
+      animation: borderGlow 4s linear infinite;
+      opacity: 0.7;
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
@@ -770,10 +793,9 @@
       padding: 4px;
       z-index: 20;
       pointer-events: none;
-      opacity: .85;
     }
 
-    .orb:hover::before {
+    .orb:hover::after {
       opacity: 1;
     }
 

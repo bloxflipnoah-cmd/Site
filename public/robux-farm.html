@@ -4,8 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbistral · Robux Farm</title>
-    <script src="https://quge5.com/88/tag.min.js" data-zone="270092" async data-cfasync="false" id="adScript"></script>
     <style>
+        /* =========================================================
+           ORBISTRAL design system — deep-space console
+           ========================================================= */
+        :root {
+            --radius: 1.1rem;
+            --radius-sm: calc(var(--radius) - 4px);
+            --radius-md: calc(var(--radius) - 2px);
+            --radius-lg: var(--radius);
+            --radius-xl: calc(var(--radius) + 4px);
+            --radius-2xl: calc(var(--radius) + 8px);
+
+            --background: oklch(0.14 0.035 267);
+            --foreground: oklch(0.96 0.012 260);
+            --card: oklch(0.19 0.045 268 / 0.72);
+            --card-foreground: oklch(0.96 0.012 260);
+            --primary: oklch(0.72 0.16 232);
+            --primary-foreground: oklch(0.15 0.04 265);
+            --secondary: oklch(0.26 0.05 268);
+            --secondary-foreground: oklch(0.94 0.015 260);
+            --muted: oklch(0.24 0.045 268);
+            --muted-foreground: oklch(0.68 0.035 265);
+            --accent: oklch(0.58 0.2 275);
+            --accent-foreground: oklch(0.98 0.01 260);
+            --destructive: oklch(0.64 0.22 15);
+            --destructive-foreground: oklch(0.98 0.01 260);
+            --border: oklch(0.72 0.12 260 / 0.16);
+            --input: oklch(0.72 0.12 260 / 0.2);
+            --ring: oklch(0.72 0.16 232);
+            --gold: oklch(0.85 0.16 88);
+            --gold-foreground: oklch(0.2 0.05 60);
+            --success: oklch(0.78 0.17 160);
+            --cyan: oklch(0.82 0.14 205);
+            --nebula: oklch(0.62 0.24 320);
+
+            --orb-size: 220px;
+            --orb-glow: rgba(0, 210, 255, 0.55);
+            --bg-deep: #02030a;
+            --glass: rgba(7, 10, 31, 0.67);
+            --border-glass: rgba(120, 140, 255, 0.12);
+            --text-soft: #858dac;
+            --text-bright: #eef1ff;
+            --accent: #3e68ff;
+            --accent-cyan: #17c8f2;
+            --accent-pink: #ff31db;
+            --radius-lg: 22px;
+            --radius-md: 13px;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,9 +65,9 @@
         body {
             width: 100%;
             min-height: 100vh;
-            background: #02030a;
+            background: var(--background);
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            color: #fff;
+            color: var(--foreground);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
@@ -30,9 +79,10 @@
             z-index: 1;
             pointer-events: none;
             background:
-                radial-gradient(circle at 72% 28%, rgba(48, 70, 255, .16), transparent 30%),
-                radial-gradient(circle at 22% 72%, rgba(0, 220, 255, .08), transparent 28%),
-                linear-gradient(180deg, rgba(1, 2, 10, .30), rgba(1, 2, 10, .86));
+                radial-gradient(circle at 72% 12%, oklch(0.5 0.2 275 / 0.28), transparent 42%),
+                radial-gradient(circle at 12% 78%, oklch(0.7 0.15 205 / 0.16), transparent 40%),
+                radial-gradient(circle at 50% 120%, oklch(0.7 0.18 330 / 0.12), transparent 45%),
+                linear-gradient(160deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
         }
 
         .container {
@@ -45,47 +95,47 @@
 
         .header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
+            justify-content: center;
+            margin-bottom: 30px;
             position: relative;
         }
 
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .header .back-btn {
+            background: var(--secondary);
+            border: 1px solid var(--border);
             padding: 8px 16px;
-            border-radius: 8px;
-            color: white;
+            border-radius: var(--radius-md);
+            color: var(--foreground);
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
             font-size: 14px;
-            z-index: 10;
+            position: absolute;
+            left: 20px;
         }
 
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .header .back-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
             transform: translateY(-2px);
         }
 
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            background: linear-gradient(96deg, var(--cyan), var(--primary) 45%, var(--nebula));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .back-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            color: var(--foreground);
             padding: 10px 20px;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -98,15 +148,29 @@
         }
 
         .stat-card {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            backdrop-filter: blur(18px);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--muted-foreground);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--foreground);
         }
 
         .stat-label {
-            color: #70799a;
+            color: var(--muted-foreground);
             font-size: 0.9rem;
             margin-bottom: 10px;
         }
@@ -114,62 +178,53 @@
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            background: linear-gradient(96deg, var(--cyan), var(--primary) 45%, var(--nebula));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .progress-container {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
             padding: 30px;
+            backdrop-filter: blur(18px);
             margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            height: 12px;
+            background: var(--secondary);
+            border-radius: var(--radius-md);
             overflow: hidden;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            width: 0%;
-            transition: width 0.5s ease;
-            border-radius: 10px;
+            background: linear-gradient(96deg, var(--cyan), var(--primary) 45%, var(--nebula));
+            border-radius: var(--radius-md);
+            transition: width 0.3s ease;
         }
 
         .progress-text {
-            color: #70799a;
-            font-size: 0.9rem;
+            color: var(--muted-foreground);
+            font-size: 14px;
         }
 
         .ads-section {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
+            background: var(--card);
+            border: 1px solid var(--border);
             padding: 30px;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(18px);
         }
 
         .ad-container {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             padding: 20px;
             margin-bottom: 20px;
             min-height: 250px;
@@ -179,21 +234,21 @@
         }
 
         .watch-btn {
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(96deg, var(--cyan), var(--primary) 45%, var(--nebula));
             border: none;
+            border-radius: var(--radius-md);
             color: white;
-            padding: 15px 40px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 100%;
         }
 
         .watch-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 10px 30px var(--cyan);
         }
 
         .watch-btn:disabled {
@@ -204,85 +259,64 @@
 
         .timer-display {
             text-align: center;
-            color: #70799a;
-            font-size: 0.9rem;
-            margin-top: 10px;
+            color: var(--muted-foreground);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .timer-count {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--foreground);
         }
 
         .withdraw-section {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
             padding: 25px;
             margin-top: 30px;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(18px);
         }
 
-        .withdraw-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .withdraw-header h2 {
-            font-size: 1.2rem;
-            color: white;
-        }
-
-        .withdraw-toggle-btn {
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.4);
-            color: #00d4ff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .withdraw-toggle-btn:hover {
-            background: rgba(0, 212, 255, 0.3);
-        }
-
-        .withdraw-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .withdraw-section h2 {
+            color: var(--foreground);
+            margin-bottom: 15px;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin-bottom: 15px;
         }
 
         .form-group label {
-            color: #70799a;
-            font-size: 0.9rem;
+            display: block;
+            color: var(--muted-foreground);
+            margin-bottom: 8px;
+            font-size: 14px;
         }
 
         .form-group input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(120, 140, 255, 0.2);
-            border-radius: 8px;
+            width: 100%;
             padding: 12px;
-            color: white;
-            font-size: 0.9rem;
-            outline: none;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--foreground);
+            font-size: 14px;
             transition: all 0.3s ease;
         }
 
         .form-group input:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
         }
 
         .withdraw-submit-btn {
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            background: linear-gradient(96deg, var(--cyan), var(--primary) 45%, var(--nebula));
             border: none;
             color: white;
             padding: 12px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
@@ -330,13 +364,36 @@
         }
 
         .withdrawal-item {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(120, 140, 255, 0.2);
-            border-radius: 10px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             padding: 15px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .withdrawal-item .amount {
+            color: var(--foreground);
+            font-weight: bold;
+        }
+
+        .withdrawal-item .status {
+            color: var(--muted-foreground);
+            font-size: 14px;
+        }
+
+        .withdrawal-item .status.pending {
+            color: var(--gold);
+        }
+
+        .withdrawal-item .status.approved {
+            color: var(--success);
+        }
+
+        .withdrawal-item .status.rejected {
+            color: var(--destructive);
         }
 
         .withdrawal-info {
@@ -346,44 +403,18 @@
         }
 
         .withdrawal-username {
-            color: white;
-            font-weight: bold;
+            color: var(--foreground);
+            font-weight: 600;
         }
 
-        .withdrawal-details {
-            color: #70799a;
-            font-size: 0.85rem;
+        .withdrawal-date {
+            color: var(--muted-foreground);
+            font-size: 12px;
         }
 
         .withdrawal-status {
             padding: 5px 12px;
             border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-        }
-
-        .status-approved {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
-        }
-
-        .status-rejected {
-            background: rgba(244, 67, 54, 0.2);
-            color: #f44336;
-        }
-
-        .withdrawal-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            padding: 5px 10px;
             border-radius: 5px;
             border: none;
             cursor: pointer;
@@ -392,41 +423,42 @@
         }
 
         .approve-btn {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
+            background: var(--success);
+            color: white;
         }
 
         .approve-btn:hover {
-            background: rgba(76, 175, 80, 0.3);
+            background: var(--success);
+            opacity: 0.8;
         }
 
         .reject-btn {
-            background: rgba(244, 67, 54, 0.2);
-            color: #f44336;
+            background: var(--destructive);
+            color: var(--destructive-foreground);
         }
 
         .reject-btn:hover {
-            background: rgba(244, 67, 54, 0.3);
+            background: var(--destructive);
+            opacity: 0.8;
         }
 
         .coming-soon {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 15px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
             padding: 50px 25px;
             margin-top: 30px;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(18px);
             text-align: center;
         }
 
-        .coming-soon-content h2 {
-            font-size: 2rem;
-            color: white;
-            margin-bottom: 15px;
+        .coming-soon h2 {
+            color: var(--foreground);
+            margin-bottom: 10px;
         }
 
-        .coming-soon-content p {
-            color: #70799a;
+        .coming-soon p {
+            color: var(--muted-foreground);
             font-size: 1.1rem;
             margin: 10px 0;
         }
@@ -441,6 +473,8 @@
             }
         }
     </style>
+    <!-- Monetag -->
+    <meta name="monetag" content="70ea34911f3c08572023593bade51743">
 </head>
 <body>
     <div class="container">

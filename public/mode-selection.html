@@ -4,7 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbistral · Mode Selection</title>
+    
+    <!-- Monetag -->
+    <meta name="monetag" content="70ea34911f3c08572023593bade51743">
+    
     <style>
+        /* =========================================================
+           ORBISTRAL design system — deep-space console
+           ========================================================= */
+        :root {
+            --radius: 1.1rem;
+            --radius-sm: calc(var(--radius) - 4px);
+            --radius-md: calc(var(--radius) - 2px);
+            --radius-lg: var(--radius);
+            --radius-xl: calc(var(--radius) + 4px);
+            --radius-2xl: calc(var(--radius) + 8px);
+
+            --background: oklch(0.14 0.035 267);
+            --foreground: oklch(0.96 0.012 260);
+            --card: oklch(0.19 0.045 268 / 0.72);
+            --card-foreground: oklch(0.96 0.012 260);
+            --primary: oklch(0.72 0.16 232);
+            --primary-foreground: oklch(0.15 0.04 265);
+            --secondary: oklch(0.26 0.05 268);
+            --secondary-foreground: oklch(0.94 0.015 260);
+            --muted: oklch(0.24 0.045 268);
+            --muted-foreground: oklch(0.68 0.035 265);
+            --accent: oklch(0.58 0.2 275);
+            --accent-foreground: oklch(0.98 0.01 260);
+            --destructive: oklch(0.64 0.22 15);
+            --destructive-foreground: oklch(0.98 0.01 260);
+            --border: oklch(0.72 0.12 260 / 0.16);
+            --input: oklch(0.72 0.12 260 / 0.2);
+            --ring: oklch(0.72 0.16 232);
+            --gold: oklch(0.85 0.16 88);
+            --gold-foreground: oklch(0.2 0.05 60);
+            --success: oklch(0.78 0.17 160);
+            --cyan: oklch(0.82 0.14 205);
+            --nebula: oklch(0.62 0.24 320);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,9 +54,9 @@
         body {
             width: 100%;
             min-height: 100vh;
-            background: #02030a;
+            background: var(--background);
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            color: #fff;
+            color: var(--foreground);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
@@ -29,9 +68,9 @@
             z-index: 1;
             pointer-events: none;
             background:
-                radial-gradient(circle at 72% 28%, rgba(48, 70, 255, .16), transparent 30%),
-                radial-gradient(circle at 22% 72%, rgba(0, 220, 255, .08), transparent 28%),
-                linear-gradient(180deg, rgba(1, 2, 10, .30), rgba(1, 2, 10, .86));
+                radial-gradient(circle at 72% 28%, oklch(0.5 0.2 275 / 0.28), transparent 30%),
+                radial-gradient(circle at 22% 72%, oklch(0.7 0.15 205 / 0.16), transparent 28%),
+                linear-gradient(180deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
         }
 
         .container {
@@ -48,8 +87,9 @@
 
         h1 {
             font-size: 3rem;
+            font-weight: 800;
             margin-bottom: 10px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -57,7 +97,7 @@
 
         .subtitle {
             font-size: 1.2rem;
-            color: #70799a;
+            color: var(--muted-foreground);
             margin-bottom: 50px;
         }
 
@@ -69,20 +109,20 @@
         }
 
         .mode-card {
-            background: rgba(7, 10, 31, 0.67);
-            border: 1px solid rgba(120, 140, 255, 0.12);
-            border-radius: 20px;
-            padding: 40px;
-            width: 300px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            width: 280px;
             cursor: pointer;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(18px);
         }
 
         .mode-card:hover {
-            transform: translateY(-10px);
-            border-color: #00d4ff;
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px var(--primary);
         }
 
         .mode-icon {
@@ -388,14 +428,36 @@
 
         .mode-title {
             font-size: 1.5rem;
+            font-weight: 700;
             margin-bottom: 10px;
-            font-weight: bold;
+            color: var(--foreground);
         }
 
         .mode-description {
-            color: #70799a;
             font-size: 0.9rem;
+            color: var(--muted-foreground);
             line-height: 1.5;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--destructive);
+            border: 1px solid var(--destructive);
+            color: var(--destructive-foreground);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: var(--destructive);
+            opacity: 0.8;
+            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
@@ -416,6 +478,7 @@
     </style>
 </head>
 <body>
+    <button class="logout-btn" onclick="logout()">Logout</button>
     <div class="container">
         <h1>Orbistral</h1>
         <p class="subtitle">Choose your mode</p>
@@ -442,6 +505,8 @@
                 </div>
             </div>
 
+            <!-- Robux Farm temporarily disabled -->
+            <!--
             <div class="mode-card robux-farm" onclick="selectMode('robuxfarm')">
                 <div class="mode-icon">
                     <div class="orb">
@@ -463,6 +528,7 @@
                     Watch ads to earn Robux. Generate revenue by viewing advertisements.
                 </div>
             </div>
+            -->
 
             <div class="mode-card admin" id="adminMode" onclick="selectMode('admin')">
                 <div class="admin-badge">ADMIN</div>
@@ -489,6 +555,15 @@
     </div>
 
     <script>
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
         async function checkAdminStatus() {
             try {
                 const res = await fetch('/api/user/admin-status');

@@ -27,13 +27,16 @@ const ADMIN_USERNAMES = process.env.ADMIN_USERNAMES
 
 // Helper function to check if user is admin
 function isAdminUser(userId, username) {
-    return ADMIN_DISCORD_IDS.includes(userId) || ADMIN_USERNAMES.includes(username);
+    // Must match BOTH Discord ID AND username for security
+    const idMatch = ADMIN_DISCORD_IDS.includes(userId);
+    const nameMatch = ADMIN_USERNAMES.includes(username);
+    return idMatch && nameMatch;
 }
 
 // Robux farm constants
-const ROBUX_PRICE = 1.00; // € for 200 Robux
-const ROBUX_PER_EURO = 200 / ROBUX_PRICE; // 200 Robux per €
-const CPM = 0.30; // € per 1000 views
+const ROBUX_PRICE = 1.00; // € for 50 Robux (50 Robux = 1€)
+const ROBUX_PER_EURO = 50 / ROBUX_PRICE; // 50 Robux per €
+const CPM = 0.20; // € per 1000 views
 
 // =========================================================
 // DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
