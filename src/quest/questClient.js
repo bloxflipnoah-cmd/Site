@@ -43,16 +43,13 @@ export class QuestClient {
 
     async #request(method, path, body, query) {
         const url = `${BASE_URL}${path}${query ? `?${query}` : ''}`;
-        const baseHeaders = this.#buildHeaders();
-        // If no body will be sent, avoid sending a Content-Type header
-        const headersNoContentType = { ...baseHeaders };
-        if (body === undefined) delete headersNoContentType['Content-Type'];
+
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             let res;
             try {
                 res = await fetch(url, {
                     method,
-                    headers: body !== undefined ? baseHeaders : headersNoContentType,
+                    headers: this.#buildHeaders(),
                     body: body !== undefined ? JSON.stringify(body) : undefined,
                 });
             } catch (err) {
@@ -91,24 +88,15 @@ export class QuestClient {
     async rawCall(method, path, body, base = 'v10') {
         const baseUrl = base === 'v9' ? BASE_URL_V9 : BASE_URL;
         try {
-            const baseHeaders = this.#buildHeaders();
-            if (body === undefined) delete baseHeaders['Content-Type'];
             const res = await fetch(`${baseUrl}${path}`, {
                 method,
-                headers: baseHeaders,
+                headers: this.#buildHeaders(),
                 body: body !== undefined ? JSON.stringify(body) : undefined,
             });
             return { status: res.status, text: await res.text() };
         } catch (err) {
             return { status: 0, text: err?.message ?? 'network error' };
         }
-    }
-
-    async sendChannelMessage(channelId, content) {
-        return this.post(`/channels/${channelId}/messages`, {
-            content,
-            allowed_mentions: { parse: [] },
-        });
     }
 
     async fetchQuests() {

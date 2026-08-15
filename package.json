@@ -1,17 +1,17 @@
 {
-  "name": "quest-completer-web",
+  "name": "quest-completer-v1",
   "version": "1.0.0",
-  "main": "web-server.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node web-server.js"
+    "start": "node src/index.js",
+    "dev": "node --env-file=.env src/index.js"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
-    "mongodb": "^7.5.0",
-    "pg": "^8.23.0"
+    "discord.js": "^14.26.0",
+    "dotenv": "^17.4.0"
   }
 }

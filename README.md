@@ -1,24 +1,15 @@
 # Quest Completer V1
 
-A Discord.js bot to manage and complete quests automatically. Now includes a web dashboard!
+A Discord.js bot to manage and complete quests automatically.
 
-## Features
+## Features / Commands
 
-### Discord Bot Commands
 | Command | Description |
 |---|---|
 | `/link` | Link your account so the bot can track and complete quests for you |
 | `/quest` | Complete a single specific quest |
 | `/questall` | Complete all available quests at once |
 | `/autoquest` | Enable automatic quest completion in the background |
-
-### Web Dashboard
-- **Login with Discord Token**: Enter your Discord user token to connect
-- **User Profile**: View your Discord profile with avatar
-- **Quest Statistics**: See total quests, completed, and remaining
-- **Progress Tracking**: Visual progress bar showing completion percentage
-- **Complete Individual Quests**: Click to complete specific quests
-- **Complete All**: One-click button to complete all remaining quests
 
 ## Environment Variables
 
@@ -42,32 +33,21 @@ BOT_PREFIX=,,
 npm install
 ```
 
-## Running
+Then start the bot:
 
-### Discord Bot
 ```bash
-node src/index.js
+node index.js
 ```
-
-### Web Dashboard
-```bash
-node web-server.js
-```
-
-The web dashboard will be available at `http://localhost:3000`
 
 ## Notes
 
 - Make sure your bot has the required Gateway Intents enabled from the Discord Developer Portal.
 - Slash commands may take a few minutes to register/update globally.
-- The web dashboard uses the same Discord token authentication as the bot
-- For the web dashboard, you need your Discord **user token** (not bot token)
 
 ## Support
 
-- **Support Server:** (removed)
+- **Support Server:** [dsc.gg/synoraxdev](https://dsc.gg/synoraxdev)
 - **Developer:** KiT2|.ggnoobies - Customised Developer { its2yashpatel_ } (Synora 乂 Development)
 
-- **Support Server:** (removed)
+- **Support Server:** [dsc.gg/synoraxdev](https://dsc.gg/synoraxdev)
 - **Developer:** KiT2|.ggnoobies { its2yashpatel_ } (Synora 乂 Development)
-"# Site" 
