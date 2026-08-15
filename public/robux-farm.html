@@ -771,7 +771,8 @@
                     document.getElementById('gamepassInput').value = '';
                     document.getElementById('robuxAmountInput').value = '';
                     toggleWithdrawForm();
-                    updateDisplay();
+                    // Reload data from server to get updated Robux count
+                    await loadRobuxFarmData();
                 } else {
                     alert('Error: ' + data.error);
                 }
