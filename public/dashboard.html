@@ -1381,6 +1381,75 @@
         loadUser();
         loadQuests();
         setInterval(loadQuests, 30000);
+
+        // --- CAPTCHA HANDLING ---
+        let currentCaptchaAnswer = null;
+
+        async function checkCaptcha() {
+            try {
+                const res = await fetch('/api/user');
+                if (res.status === 403) {
+                    const data = await res.json();
+                    if (data.captchaRequired) {
+                        showCaptchaModal(data.captchaQuestion);
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('Captcha check error:', error);
+                return false;
+            }
+        }
+
+        function showCaptchaModal(question) {
+            const modal = document.getElementById('captchaModal');
+            const questionEl = document.getElementById('captchaQuestion');
+            questionEl.textContent = question;
+            modal.classList.add('active');
+        }
+
+        function hideCaptchaModal() {
+            const modal = document.getElementById('captchaModal');
+            modal.classList.remove('active');
+        }
+
+        async function submitCaptcha() {
+            const answer = document.getElementById('captchaAnswer').value;
+            try {
+                const res = await fetch('/api/captcha/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answer })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    hideCaptchaModal();
+                    document.getElementById('captchaAnswer').value = '';
+                    // Reload the page or continue with the action
+                    location.reload();
+                } else {
+                    alert('Invalid captcha answer. Please try again.');
+                }
+            } catch (error) {
+                console.error('Captcha verification error:', error);
+                alert('Captcha verification failed. Please try again.');
+            }
+        }
+
+        // Check for captcha on page load and periodically
+        checkCaptcha();
+        setInterval(checkCaptcha, 60000); // Check every minute
     </script>
+
+    <!-- Captcha Modal -->
+    <div id="captchaModal" class="captcha-modal">
+        <div class="captcha-content">
+            <div class="captcha-title">Security Verification</div>
+            <div class="captcha-question" id="captchaQuestion"></div>
+            <input type="text" id="captchaAnswer" class="captcha-input" placeholder="Enter your answer">
+            <button class="captcha-submit" onclick="submitCaptcha()">Verify</button>
+        </div>
+    </div>
 </body>
 </html>

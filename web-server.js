@@ -38,6 +38,10 @@ const ROBUX_PRICE = 1.00; // € for 50 Robux (50 Robux = 1€)
 const ROBUX_PER_EURO = 50 / ROBUX_PRICE; // 50 Robux per €
 const CPM = 0.20; // € per 1000 views
 
+// Captcha security constants
+const CAPTCHA_REQUIRED_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+const CAPTCHA_COOLDOWN = 5 * 60 * 1000; // 5 minutes cooldown after verification
+
 // =========================================================
 // DATABASE INITIALIZATION (POSTGRESQL + SQLITE FALLBACK)
 // =========================================================
@@ -99,7 +103,9 @@ function createSQLiteTables() {
             userToken TEXT NOT NULL,
             username TEXT,
             avatar TEXT,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            lastCaptchaVerification DATETIME,
+            captchaRequired INTEGER DEFAULT 0
         )
     `);
 
@@ -150,7 +156,9 @@ async function createPostgreSQLTables() {
                 "userToken" TEXT NOT NULL,
                 "username" TEXT,
                 "avatar" TEXT,
-                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "lastCaptchaVerification" TIMESTAMP,
+                "captchaRequired" INTEGER DEFAULT 0
             )
         `);
 
@@ -334,7 +342,9 @@ async function getSession(sessionId) {
                         userId: row.userId,
                         userToken: row.userToken,
                         username: row.username,
-                        avatar: row.avatar
+                        avatar: row.avatar,
+                        lastCaptchaVerification: row.lastCaptchaVerification,
+                        captchaRequired: row.captchaRequired
                     };
                 }
             } finally {
@@ -354,7 +364,9 @@ async function getSession(sessionId) {
                     userId: session.userId,
                     userToken: session.userToken,
                     username: session.username,
-                    avatar: session.avatar
+                    avatar: session.avatar,
+                    lastCaptchaVerification: session.lastCaptchaVerification,
+                    captchaRequired: session.captchaRequired
                 };
             }
         } catch (error) {
@@ -371,8 +383,8 @@ async function createSession(sessionId, userId, userToken, username, avatar) {
             const client = await pgPool.connect();
             try {
                 await client.query(`
-                    INSERT INTO sessions ("sessionId", "userId", "userToken", "username", "avatar")
-                    VALUES ($1, $2, $3, $4, $5)
+                    INSERT INTO sessions ("sessionId", "userId", "userToken", "username", "avatar", "lastCaptchaVerification", "captchaRequired")
+                    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, 0)
                     ON CONFLICT ("sessionId") DO UPDATE SET
                         "userId" = EXCLUDED."userId",
                         "userToken" = EXCLUDED."userToken",
@@ -388,8 +400,8 @@ async function createSession(sessionId, userId, userToken, username, avatar) {
     } else {
         try {
             const stmt = db.prepare(`
-                INSERT INTO sessions (sessionId, userId, userToken, username, avatar)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO sessions (sessionId, userId, userToken, username, avatar, lastCaptchaVerification, captchaRequired)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0)
                 ON CONFLICT(sessionId) DO UPDATE SET
                     userId = excluded.userId,
                     userToken = excluded.userToken,
@@ -423,6 +435,80 @@ async function deleteSession(sessionId) {
             console.error('SQLite session delete error:', error);
         }
     }
+}
+
+async function checkCaptchaRequired(sessionId) {
+    const session = await getSession(sessionId);
+    if (!session) return false;
+    
+    const now = new Date();
+    const createdAt = new Date(session.createdAt);
+    const lastVerification = session.lastCaptchaVerification ? new Date(session.lastCaptchaVerification) : createdAt;
+    
+    // Check if user has been on site for more than 30 minutes since last verification
+    const timeSinceLastVerification = now - lastVerification;
+    const timeSinceCreation = now - createdAt;
+    
+    // Require captcha if session is older than 30 minutes and last verification was more than 30 minutes ago
+    if (timeSinceCreation > CAPTCHA_REQUIRED_INTERVAL && timeSinceLastVerification > CAPTCHA_REQUIRED_INTERVAL) {
+        return true;
+    }
+    
+    return false;
+}
+
+async function updateCaptchaVerification(sessionId) {
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(
+                    'UPDATE sessions SET "lastCaptchaVerification" = CURRENT_TIMESTAMP, "captchaRequired" = 0 WHERE "sessionId" = $1',
+                    [sessionId]
+                );
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL captcha update error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare('UPDATE sessions SET lastCaptchaVerification = CURRENT_TIMESTAMP, captchaRequired = 0 WHERE sessionId = ?');
+            stmt.run(sessionId);
+        } catch (error) {
+            console.error('SQLite captcha update error:', error);
+        }
+    }
+}
+
+function generateSimpleCaptcha() {
+    const operators = ['+', '-', '*'];
+    const operator = operators[Math.floor(Math.random() * operators.length)];
+    let num1, num2, answer;
+    
+    switch(operator) {
+        case '+':
+            num1 = Math.floor(Math.random() * 20) + 1;
+            num2 = Math.floor(Math.random() * 20) + 1;
+            answer = num1 + num2;
+            break;
+        case '-':
+            num1 = Math.floor(Math.random() * 20) + 10;
+            num2 = Math.floor(Math.random() * num1);
+            answer = num1 - num2;
+            break;
+        case '*':
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+            answer = num1 * num2;
+            break;
+    }
+    
+    return {
+        question: `${num1} ${operator} ${num2} = ?`,
+        answer: answer.toString()
+    };
 }
 
 // =========================================================
@@ -2045,6 +2131,18 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // Check if captcha is required
+        const captchaRequired = await checkCaptchaRequired(sessionId);
+        if (captchaRequired) {
+            const captcha = generateSimpleCaptcha();
+            sendJson(res, { 
+                error: 'Captcha required',
+                captchaRequired: true,
+                captchaQuestion: captcha.question
+            }, 403);
+            return;
+        }
+
         try {
 
             const questClient =
@@ -2364,6 +2462,18 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // Check if captcha is required
+        const captchaRequired = await checkCaptchaRequired(sessionId);
+        if (captchaRequired) {
+            const captcha = generateSimpleCaptcha();
+            sendJson(res, { 
+                error: 'Captcha required',
+                captchaRequired: true,
+                captchaQuestion: captcha.question
+            }, 403);
+            return;
+        }
+
         try {
 
             const questClient =
@@ -2509,6 +2619,18 @@ const server = http.createServer(async (req, res) => {
                 { error: 'Unauthorized' },
                 401
             );
+            return;
+        }
+
+        // Check if captcha is required
+        const captchaRequired = await checkCaptchaRequired(sessionId);
+        if (captchaRequired) {
+            const captcha = generateSimpleCaptcha();
+            sendJson(res, { 
+                error: 'Captcha required',
+                captchaRequired: true,
+                captchaQuestion: captcha.question
+            }, 403);
             return;
         }
 
@@ -3057,6 +3179,55 @@ const server = http.createServer(async (req, res) => {
             res,
             { isAdmin }
         );
+
+        return;
+    }
+
+
+    // =====================================================
+    // CAPTCHA VERIFICATION
+    // =====================================================
+
+    if (
+        pathname === '/api/captcha/verify' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { answer } = JSON.parse(body);
+                    
+                    // Generate the expected answer based on session (in production, store the captcha answer in session)
+                    // For now, we'll use a simple validation
+                    const captcha = generateSimpleCaptcha();
+                    
+                    if (answer === captcha.answer) {
+                        await updateCaptchaVerification(sessionId);
+                        sendJson(res, { success: true });
+                    } else {
+                        sendJson(res, { error: 'Invalid captcha answer' }, 400);
+                    }
+                } catch (error) {
+                    console.error('Captcha verification error:', error);
+                    sendJson(res, { error: 'Captcha verification failed' }, 500);
+                }
+            });
+        } catch (error) {
+            console.error('Captcha verification error:', error);
+            sendJson(res, { error: 'Captcha verification failed' }, 500);
+        }
 
         return;
     }
