@@ -338,6 +338,26 @@
             text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #ff3388, 0 0 35px #dd0055;
         }
 
+        /* Gray out casino card */
+        .casino {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        .casino .mode-card {
+            background: linear-gradient(135deg, rgba(100, 100, 100, 0.1), rgba(80, 80, 80, 0.05));
+        }
+
+        .casino .orb {
+            filter: grayscale(100%) brightness(0.7);
+        }
+
+        .casino .mode-title,
+        .casino .mode-description {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
         .admin .stat-light {
             background: radial-gradient(circle, rgba(255, 215, 0, .2) 0%, rgba(255, 170, 0, .08) 35%, transparent 70%);
         }
@@ -383,16 +403,20 @@
 
         .coming-soon-badge {
             position: absolute;
-            top: -10px;
-            right: -10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
             background: linear-gradient(110deg, #ff6b6b, #ee5a5a);
             color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 25;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            z-index: 30;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
         }
 
         #adminMode {
