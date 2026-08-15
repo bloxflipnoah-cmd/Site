@@ -699,9 +699,11 @@ async function getUserWarnings(userId) {
     return { warningCount: 0, banUntil: null, isPermanentlyBanned: false, lastWarningAt: null };
 }
 
-async function addUserWarning(userId) {
+async function addUserWarning(userId, username = null, reason = null) {
     const currentWarnings = await getUserWarnings(userId);
     const newWarningCount = currentWarnings.warningCount + 1;
+    
+    console.log(`[WARNING] Adding warning to user ${userId}${username ? ` (${username})` : ''}. Reason: ${reason || 'Unknown'}. New count: ${newWarningCount}`);
     
     let banUntil = null;
     let isPermanentlyBanned = 0;
@@ -1933,6 +1935,28 @@ const server = http.createServer(async (req, res) => {
                 302,
                 {
                     'Location': '/login'
+                }
+            );
+
+            res.end();
+
+            return;
+        }
+
+        // Check if user is admin, if not add warning and redirect
+        const isAdmin = isAdminUser(session.userId, session.username);
+        if (!isAdmin) {
+            console.log(`[SECURITY] Unauthorized admin access attempt by user ${session.userId} (${session.username})`);
+            logSecurityEvent(getClientIP(req), 'UNAUTHORIZED_ADMIN_ACCESS', `User ${session.userId} (${session.username}) attempted to access admin panel`);
+            
+            // Add warning to user
+            await addUserWarning(session.userId, session.username, 'Unauthorized admin access attempt');
+            
+            // Redirect to mode-selection with error
+            res.writeHead(
+                302,
+                {
+                    'Location': '/mode-selection'
                 }
             );
 

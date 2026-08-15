@@ -537,8 +537,8 @@
                     <input type="text" id="gamepassInput" placeholder="Enter gamepass ID">
                 </div>
                 <div class="form-group">
-                    <label>Amount (Min: 50 Robux)</label>
-                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="50" step="1">
+                    <label>Amount (Min: 200 Robux)</label>
+                    <input type="number" id="robuxAmountInput" placeholder="Enter amount" min="200" step="1">
                 </div>
                 <button class="withdraw-submit-btn" onclick="submitWithdraw()">Submit Withdraw</button>
             </div>
@@ -751,8 +751,8 @@
                 return;
             }
 
-            if (robuxAmount < 50) {
-                alert('Minimum withdrawal is 50 Robux');
+            if (robuxAmount < 200) {
+                alert('Minimum withdrawal is 200 Robux');
                 return;
             }
 
