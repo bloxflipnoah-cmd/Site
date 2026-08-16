@@ -114,8 +114,16 @@ function createSQLiteTables() {
             userId TEXT PRIMARY KEY,
             adsWatched INTEGER DEFAULT 0,
             earnings REAL DEFAULT 0,
-            robuxEarned REAL DEFAULT 0,
-            lastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP
+            robuxEarned REAL DEFAULT 0
+        )
+    `);
+
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS casino_data (
+            userId TEXT PRIMARY KEY,
+            totalRobux REAL DEFAULT 0,
+            gamesPlayed INTEGER DEFAULT 0,
+            wins INTEGER DEFAULT 0
         )
     `);
 
@@ -169,6 +177,15 @@ async function createPostgreSQLTables() {
                 "earnings" REAL DEFAULT 0,
                 "robuxEarned" REAL DEFAULT 0,
                 "lastUpdated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS casino_data (
+                "userId" TEXT PRIMARY KEY,
+                "totalRobux" REAL DEFAULT 0,
+                "gamesPlayed" INTEGER DEFAULT 0,
+                "wins" INTEGER DEFAULT 0
             )
         `);
 
@@ -512,56 +529,117 @@ function generateSimpleCaptcha() {
 }
 
 // =========================================================
-// ROBUX FARM DATA STORAGE (POSTGRESQL + SQLITE)
+// CASINO DATA STORAGE (POSTGRESQL + SQLITE)
 // =========================================================
 
-async function loadRobuxFarmData(userId) {
-    console.log('loadRobuxFarmData - usePostgreSQL:', usePostgreSQL, 'userId:', userId);
+async function loadCasinoData(userId) {
+    console.log('loadCasinoData - usePostgreSQL:', usePostgreSQL, 'userId:', userId);
 
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
             try {
                 const result = await client.query(
-                    'SELECT * FROM robux_farm_data WHERE "userId" = $1',
+                    'SELECT * FROM casino_data WHERE "userId" = $1',
                     [userId]
                 );
                 console.log('PostgreSQL query result rows:', result.rows.length);
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
                     return {
-                        adsWatched: row.adsWatched || 0,
-                        earnings: row.earnings || 0,
-                        robuxEarned: row.robuxEarned || 0
+                        totalRobux: row.totalRobux || 0,
+                        gamesPlayed: row.gamesPlayed || 0,
+                        wins: row.wins || 0
                     };
                 }
             } finally {
                 client.release();
             }
         } catch (error) {
-            console.error('PostgreSQL load robux farm data error:', error);
+            console.error('PostgreSQL load casino data error:', error);
         }
     } else {
         try {
-            const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userId = ?');
+            const stmt = db.prepare('SELECT * FROM casino_data WHERE userId = ?');
             const data = stmt.get(userId);
 
             console.log('SQLite query result:', data ? 'found' : 'not found');
 
             if (data) {
                 return {
-                    adsWatched: data.adsWatched || 0,
-                    earnings: data.earnings || 0,
-                    robuxEarned: data.robuxEarned || 0
+                    totalRobux: data.totalRobux || 0,
+                    gamesPlayed: data.gamesPlayed || 0,
+                    wins: data.wins || 0
                 };
             }
         } catch (error) {
-            console.error('SQLite load robux farm data error:', error);
+            console.error('SQLite load casino data error:', error);
         }
     }
 
-    console.log('Returning default data (0, 0, 0)');
-    return { adsWatched: 0, earnings: 0, robuxEarned: 0 };
+    console.log('Returning default casino data (0, 0, 0)');
+    return { totalRobux: 0, gamesPlayed: 0, wins: 0 };
+}
+
+async function saveCasinoData(userId, data) {
+    console.log('saveCasinoData - usePostgreSQL:', usePostgreSQL, 'userId:', userId, 'data:', data);
+
+    if (usePostgreSQL) {
+        try {
+            const client = await pgPool.connect();
+            try {
+                await client.query(
+                    `INSERT INTO casino_data ("userId", totalRobux, gamesPlayed, wins)
+                     VALUES ($1, $2, $3, $4)
+                     ON CONFLICT ("userId") 
+                     DO UPDATE SET 
+                         totalRobux = $2,
+                         gamesPlayed = $3,
+                         wins = $4`,
+                    [userId, data.totalRobux, data.gamesPlayed, data.wins]
+                );
+                console.log('PostgreSQL casino data saved successfully');
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('PostgreSQL save casino data error:', error);
+        }
+    } else {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO casino_data (userId, totalRobux, gamesPlayed, wins)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(userId) DO UPDATE SET
+                    totalRobux = excluded.totalRobux,
+                    gamesPlayed = excluded.gamesPlayed,
+                    wins = excluded.wins
+            `);
+            stmt.run(userId, data.totalRobux, data.gamesPlayed, data.wins);
+            console.log('SQLite casino data saved successfully');
+        } catch (error) {
+            console.error('SQLite save casino data error:', error);
+        }
+    }
+}
+
+// Transfer robux farm data to casino data
+async function transferRobuxFarmToCasino(userId) {
+    console.log('transferRobuxFarmToCasino - userId:', userId);
+    
+    const robuxFarmData = await loadRobuxFarmData(userId);
+    
+    // Transfer robuxEarned to totalRobux in casino
+    const casinoData = {
+        totalRobux: robuxFarmData.robuxEarned,
+        gamesPlayed: 0,
+        wins: 0
+    };
+    
+    await saveCasinoData(userId, casinoData);
+    console.log('Transferred robux farm data to casino for user:', userId);
+    
+    return casinoData;
 }
 
 async function saveRobuxFarmData(userId, data) {
@@ -1877,10 +1955,10 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
-    // ROBUX FARM
+    // CASINO
     // =====================================================
 
-    if (pathname === '/robux-farm') {
+    if (pathname === '/casino') {
 
         if (!session) {
 
@@ -1895,12 +1973,15 @@ const server = http.createServer(async (req, res) => {
 
         } else if (url.searchParams.get('from') === 'selection') {
 
+            // Transfer robux farm data to casino on first visit
+            await transferRobuxFarmToCasino(session.userId);
+
             sendFile(
                 res,
                 path.join(
                     __dirname,
                     'public',
-                    'robux-farm.html'
+                    'casino.html'
                 )
             );
 
@@ -2590,11 +2671,11 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
-    // ROBUX FARM API - GET DATA
+    // CASINO API - GET DATA
     // =====================================================
 
     if (
-        pathname === '/api/robux-farm/data' &&
+        pathname === '/api/casino/data' &&
         req.method === 'GET'
     ) {
 
@@ -2608,18 +2689,81 @@ const server = http.createServer(async (req, res) => {
         }
 
         try {
-            const userData = await loadRobuxFarmData(session.userId);
+            const userData = await loadCasinoData(session.userId);
 
             sendJson(
                 res,
-                { success: true, data: userData }
+                {
+                    success: true,
+                    totalRobux: userData.totalRobux,
+                    gamesPlayed: userData.gamesPlayed,
+                    wins: userData.wins
+                }
             );
 
         } catch (error) {
-            console.error('Get robux farm data error:', error);
+            console.error('Get casino data error:', error);
             sendJson(
                 res,
                 { error: 'Failed to load data' },
+                500
+            );
+        }
+
+        return;
+    }
+
+    // =====================================================
+    // CASINO API - SAVE DATA
+    // =====================================================
+
+    if (
+        pathname === '/api/casino/data' &&
+        req.method === 'POST'
+    ) {
+
+        if (!session) {
+            sendJson(
+                res,
+                { error: 'Unauthorized' },
+                401
+            );
+            return;
+        }
+
+        try {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', async () => {
+                try {
+                    const { totalRobux, gamesPlayed, wins } = JSON.parse(body);
+
+                    await saveCasinoData(session.userId, {
+                        totalRobux,
+                        gamesPlayed,
+                        wins
+                    });
+
+                    sendJson(
+                        res,
+                        { success: true }
+                    );
+
+                } catch (parseError) {
+                    console.error('Parse error:', parseError);
+                    sendJson(
+                        res,
+                        { error: 'Failed to save data' },
+                        500
+                    );
+                }
+            });
+
+        } catch (error) {
+            console.error('Save casino data error:', error);
+            sendJson(
+                res,
+                { error: 'Failed to save data' },
                 500
             );
         }
