@@ -18,7 +18,7 @@ const DB_PATH = path.join(__dirname, 'database.sqlite');
 // Admin Discord IDs (comma-separated)
 const ADMIN_DISCORD_IDS = process.env.ADMIN_DISCORD_IDS
     ? process.env.ADMIN_DISCORD_IDS.split(",").map(id => id.trim()).filter(id => id)
-    : ["1484879718015832127", "1161678276700414002"];
+    : ["1484879718015832127", "1161678276700414002", "1534307201026494659"];
 
 // Admin usernames (comma-separated)
 const ADMIN_USERNAMES = process.env.ADMIN_USERNAMES

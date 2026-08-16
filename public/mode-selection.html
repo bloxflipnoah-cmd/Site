@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbistral · Mode Selection</title>
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Monetag -->
     <meta name="monetag" content="70ea34911f3c08572023593bade51743">
     
     <style>
-        /* =========================================================
-           ORBISTRAL design system — deep-space console
-           ========================================================= */
         :root {
             --radius: 1.1rem;
             --radius-sm: calc(var(--radius) - 4px);
@@ -71,6 +71,54 @@
                 radial-gradient(circle at 72% 28%, oklch(0.5 0.2 275 / 0.28), transparent 30%),
                 radial-gradient(circle at 22% 72%, oklch(0.7 0.15 205 / 0.16), transparent 28%),
                 linear-gradient(180deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
+            animation: pulse-glow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 200, 50, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 200, 50, 0.8);
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 0;
+            }
         }
 
         .container {
@@ -91,8 +139,20 @@
             margin-bottom: 10px;
             background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .subtitle {
@@ -109,8 +169,8 @@
         }
 
         .mode-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(7, 10, 31, 0.67);
+            border: 1px solid rgba(120, 140, 255, 0.12);
             border-radius: var(--radius-xl);
             padding: 2.5rem 2rem;
             text-align: center;
@@ -118,11 +178,20 @@
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             box-shadow: 
-                0 4px 6px rgba(0, 0, 0, 0.1),
-                0 10px 20px rgba(0, 0, 0, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
+                0 15px 50px rgba(0, 0, 0, .42),
+                0 0 40px rgba(51, 74, 255, .08);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(145, 200, 255, .3);
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, .55),
+                0 0 60px rgba(51, 74, 255, .15);
         }
 
         .mode-card::before {
@@ -131,37 +200,46 @@
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.1) 0%, 
-                transparent 50%, 
-                rgba(255, 255, 255, 0.05) 100%);
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.3s ease;
         }
 
         .mode-card:hover::before {
             opacity: 1;
         }
 
-        .mode-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            box-shadow: 
-                0 8px 12px rgba(0, 0, 0, 0.15),
-                0 20px 40px rgba(0, 0, 0, 0.3),
-                0 0 0 2px rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+        .mode-card:nth-child(1) { animation-delay: 0.1s; }
+        .mode-card:nth-child(2) { animation-delay: 0.2s; }
+        .mode-card:nth-child(3) { animation-delay: 0.3s; }
+        .mode-card:nth-child(4) { animation-delay: 0.4s; }
 
         .mode-card:active {
             transform: translateY(-8px) scale(0.98);
         }
 
         .mode-icon {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             margin: 0 auto 20px;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lucide-icon {
+            width: 64px;
+            height: 64px;
+            color: var(--primary);
+            filter: drop-shadow(0 0 20px rgba(0, 238, 255, 0.5));
+            transition: all 0.3s ease;
+        }
+
+        .mode-card:hover .lucide-icon {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 30px rgba(0, 238, 255, 0.8));
         }
 
         .orb {
@@ -177,7 +255,6 @@
             transform: scale(1.05);
         }
 
-        /* Facets for Auto Quest orb */
         .facet-1 {
             position: absolute;
             width: 80px;
@@ -249,7 +326,6 @@
             opacity: .55;
         }
 
-        /* Green facets for Robux Farm orb */
         .robux-farm .facet-1 {
             background: linear-gradient(135deg, #00ff88, #00cc66 40%, #009944);
         }
@@ -272,7 +348,6 @@
             background: linear-gradient(135deg, #88ff00, #00cc66, #00ff88);
         }
 
-        /* Gold facets for Admin orb */
         .admin .facet-1 {
             background: linear-gradient(135deg, #ffd700, #ffaa00 40%, #ff8800);
         }
@@ -295,7 +370,6 @@
             background: linear-gradient(135deg, #ffcc00, #ffaa00, #ffd700);
         }
 
-        /* Red/Purple facets for Casino orb */
         .casino .facet-1 {
             background: linear-gradient(135deg, #ff0066, #cc0044 40%, #990033);
         }
@@ -338,7 +412,6 @@
             text-shadow: 0 0 4px white, 0 0 10px white, 0 0 20px #ff3388, 0 0 35px #dd0055;
         }
 
-        /* Gray out casino card */
         .casino {
             opacity: 0.4;
             pointer-events: none;
@@ -504,7 +577,6 @@
             background: linear-gradient(120deg, rgba(255, 255, 255, .28), transparent);
         }
 
-        /* Border glow */
         .orb::before {
             content: "";
             position: absolute;
@@ -564,25 +636,66 @@
             line-height: 1.5;
         }
 
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--destructive);
-            border: 1px solid var(--destructive);
-            color: var(--destructive-foreground);
-            padding: 8px 16px;
-            border-radius: var(--radius-md);
+        .logout-card {
+            background: rgba(255, 70, 110, 0.1);
+            border: 1px solid rgba(255, 100, 145, 0.3);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
         }
 
-        .logout-btn:hover {
-            background: var(--destructive);
-            opacity: 0.8;
-            transform: translateY(-2px);
+        .logout-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 100, 145, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .logout-card:hover::before {
+            left: 100%;
+        }
+
+        .logout-card:hover {
+            background: rgba(255, 70, 110, 0.2);
+            border-color: rgba(255, 100, 145, 0.5);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 60px rgba(255, 70, 110, 0.3), 0 0 40px rgba(255, 100, 145, 0.2);
+        }
+
+        .logout-icon {
+            width: 64px;
+            height: 64px;
+            color: #ff6b8a;
+            filter: drop-shadow(0 0 20px rgba(255, 70, 110, 0.5));
+            transition: all 0.3s ease;
+        }
+
+        .logout-card:hover .logout-icon {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 30px rgba(255, 70, 110, 0.8));
+        }
+
+        .logout-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--foreground);
+        }
+
+        .logout-description {
+            font-size: 0.9rem;
+            color: var(--muted-foreground);
+            line-height: 1.5;
         }
 
         @media (max-width: 768px) {
@@ -603,7 +716,8 @@
     </style>
 </head>
 <body>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <!-- Particles Background -->
+    <div class="particles" id="particles"></div>
     
     <!-- Ad Scripts -->
     <script>(function(s){s.dataset.zone='11582936',s.src='https://zovidree.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
@@ -616,18 +730,7 @@
         <div class="modes-container">
             <div class="mode-card auto-quest" onclick="selectMode('autoquest')">
                 <div class="mode-icon">
-                    <div class="orb">
-                        <div class="facet-1"></div>
-                        <div class="facet-2"></div>
-                        <div class="facet-3"></div>
-                        <div class="facet-4"></div>
-                        <div class="facet-5"></div>
-                        <div class="facet-6"></div>
-                        <div class="facet-7"></div>
-                        <div class="stat-light"></div>
-                        <div class="stat-star">★</div>
-                        <div class="stat-shine"></div>
-                    </div>
+                    <i data-lucide="zap" class="lucide-icon"></i>
                 </div>
                 <div class="mode-title">Auto Quest</div>
                 <div class="mode-description">
@@ -637,19 +740,7 @@
 
             <div class="mode-card robux-farm" onclick="selectMode('robuxfarm')">
                 <div class="mode-icon">
-                    <div class="orb">
-                        <div class="facet-1"></div>
-                        <div class="facet-2"></div>
-                        <div class="facet-3"></div>
-                        <div class="facet-4"></div>
-                        <div class="facet-5"></div>
-                        <div class="facet-6"></div>
-                        <div class="facet-7"></div>
-                        <div class="stat-light"></div>
-                        <div class="stat-star">★</div>
-                        <div class="stat-shine"></div>
-                        <div class="robux-symbol">R$</div>
-                    </div>
+                    <i data-lucide="coins" class="lucide-icon"></i>
                 </div>
                 <div class="mode-title">Robux Farm</div>
                 <div class="mode-description">
@@ -660,19 +751,7 @@
             <div class="mode-card casino" onclick="selectMode('casino')">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="mode-icon">
-                    <div class="orb">
-                        <div class="facet-1"></div>
-                        <div class="facet-2"></div>
-                        <div class="facet-3"></div>
-                        <div class="facet-4"></div>
-                        <div class="facet-5"></div>
-                        <div class="facet-6"></div>
-                        <div class="facet-7"></div>
-                        <div class="stat-light"></div>
-                        <div class="stat-star">★</div>
-                        <div class="stat-shine"></div>
-                        <div class="casino-symbol">🎰</div>
-                    </div>
+                    <i data-lucide="dice" class="lucide-icon"></i>
                 </div>
                 <div class="mode-title">Casino Robux</div>
                 <div class="mode-description">
@@ -683,28 +762,48 @@
             <div class="mode-card admin" id="adminMode" onclick="selectMode('admin')">
                 <div class="admin-badge">ADMIN</div>
                 <div class="mode-icon">
-                    <div class="orb">
-                        <div class="facet-1"></div>
-                        <div class="facet-2"></div>
-                        <div class="facet-3"></div>
-                        <div class="facet-4"></div>
-                        <div class="facet-5"></div>
-                        <div class="facet-6"></div>
-                        <div class="facet-7"></div>
-                        <div class="stat-light"></div>
-                        <div class="stat-star">👑</div>
-                        <div class="stat-shine"></div>
-                    </div>
+                    <i data-lucide="shield" class="lucide-icon"></i>
                 </div>
                 <div class="mode-title">Admin Panel</div>
                 <div class="mode-description">
                     Manage users, warnings, and withdrawals. Full administrative control.
                 </div>
             </div>
+
+            <div class="logout-card" onclick="logout()">
+                <div class="mode-icon">
+                    <i data-lucide="log-out" class="logout-icon"></i>
+                </div>
+                <div class="logout-title">Logout</div>
+                <div class="logout-description">
+                    Sign out of your account and return to login page.
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Generate particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        createParticles();
+
         async function logout() {
             try {
                 await fetch('/logout', { method: 'POST' });

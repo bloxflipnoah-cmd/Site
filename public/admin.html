@@ -20,9 +20,6 @@
     <meta name="monetag" content="70ea34911f3c08572023593bade51743">
 
     <style>
-        /* =========================================================
-           ORBISTRAL design system — deep-space console
-           ========================================================= */
         :root {
             --radius: 1.1rem;
             --radius-sm: calc(var(--radius) - 4px);
@@ -94,23 +91,10 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ---------- BACKGROUND ---------- */
 
         body::before {
             content: "";
             position: fixed;
-            inset: 0;
-            z-index: -3;
-            background:
-                radial-gradient(circle at 72% 12%, oklch(0.5 0.2 275 / 0.28), transparent 42%),
-                radial-gradient(circle at 12% 78%, oklch(0.7 0.15 205 / 0.16), transparent 40%),
-                radial-gradient(circle at 50% 120%, oklch(0.7 0.18 330 / 0.12), transparent 45%),
-                linear-gradient(160deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
-            background-image:
-                linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-            background-size: 50px 50px;
-            mask-image: linear-gradient(to bottom, black, transparent 85%);
         }
 
         body::after {
@@ -144,7 +128,6 @@
             }
         }
 
-        /* Neon particles effect */
         .particles {
             position: fixed;
             top: 0;
@@ -183,7 +166,6 @@
             }
         }
 
-        /* ---------- SCROLLBAR ---------- */
 
         ::-webkit-scrollbar {
             width: 8px;
@@ -198,7 +180,6 @@
             border-radius: 99px;
         }
 
-        /* ---------- TOP BAR ---------- */
 
         .topbar {
             position: sticky;
@@ -306,7 +287,6 @@
             background: rgba(255,255,255,.07);
         }
 
-        /* ---------- LAYOUT ---------- */
 
         .admin-layout {
             display: flex;
@@ -379,10 +359,11 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid transparent;
             position: relative;
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .nav-item::before {
@@ -392,32 +373,132 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.5s ease;
+            background: linear-gradient(90deg, transparent, rgba(0, 238, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            transition: width 0.4s ease;
         }
 
         .nav-item:hover::before {
             left: 100%;
         }
 
+        .nav-item:hover::after {
+            width: 100%;
+        }
+
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 238, 255, 0.08);
             color: var(--foreground);
-            border-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
+            border-color: rgba(0, 238, 255, 0.3);
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 238, 255, 0.2), 0 0 60px rgba(0, 238, 255, 0.1);
         }
 
         .nav-item.active {
-            background: linear-gradient(135deg, rgba(255, 200, 50, 0.15), rgba(255, 159, 26, 0.1));
-            color: var(--gold);
-            border-color: rgba(255, 200, 50, 0.3);
-            transform: translateX(4px);
-            box-shadow: 0 4px 15px rgba(255, 200, 50, 0.1);
+            background: linear-gradient(135deg, rgba(0, 238, 255, 0.15), rgba(0, 150, 255, 0.1));
+            color: var(--primary);
+            border-color: rgba(0, 238, 255, 0.4);
+            transform: translateX(8px);
+            box-shadow: 0 0 40px rgba(0, 238, 255, 0.3), 0 0 80px rgba(0, 238, 255, 0.15);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .nav-item.active::after {
+            width: 100%;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 40px rgba(0, 238, 255, 0.3), 0 0 80px rgba(0, 238, 255, 0.15);
+            }
+            50% {
+                box-shadow: 0 0 60px rgba(0, 238, 255, 0.5), 0 0 100px rgba(0, 238, 255, 0.25);
+            }
         }
 
         .nav-item i {
             width: 20px;
             height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover i {
+            transform: scale(1.2) rotate(5deg);
+            filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.8));
+        }
+
+        .animated-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .animated-menu-item {
+            all: unset;
+            flex-grow: 1;
+            z-index: 100;
+            display: flex;
+            cursor: pointer;
+            position: relative;
+            border-radius: 12px;
+            align-items: center;
+            will-change: transform;
+            justify-content: center;
+            padding: 14px 16px;
+            transition: transform 0.7s;
+        }
+
+        .animated-menu-item::before {
+            content: "";
+            z-index: -1;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            position: absolute;
+            transform: scale(0);
+            transition: background-color 0.7s, transform 0.7s;
+        }
+
+        .animated-menu-item.active {
+            transform: translate3d(0, -8px, 0);
+        }
+
+        .animated-menu-item.active::before {
+            transform: scale(1);
+            background-color: var(--bgColorItem);
+        }
+
+        .animated-menu-icon {
+            width: 26px;
+            height: 26px;
+            stroke: white;
+            fill: transparent;
+            stroke-width: 1pt;
+            stroke-miterlimit: 10;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 400;
+        }
+
+        .animated-menu-item.active .animated-menu-icon {
+            animation: strok 1.5s reverse;
+        }
+
+        @keyframes strok {
+            100% {
+                stroke-dashoffset: 400;
+            }
         }
 
         .main-content {
@@ -505,7 +586,6 @@
                 inset 0 1px rgba(255,255,255,.8);
         }
 
-        /* ---------- STATS ---------- */
 
         .stats-grid {
             display: grid;
@@ -606,7 +686,6 @@
             font-size: 11px;
         }
 
-        /* ---------- MAIN GRID ---------- */
 
         .admin-sections {
             display: grid;
@@ -714,7 +793,6 @@
             font-size: 10px;
         }
 
-        /* ---------- FORMS ---------- */
 
         .form-group {
             margin-bottom: 17px;
@@ -794,7 +872,6 @@
             box-shadow: 0 0 0 3px var(--gold-soft);
         }
 
-        /* ---------- BUTTON ---------- */
 
         .btn {
             position: relative;
@@ -853,7 +930,6 @@
             transform: translateY(0);
         }
 
-        /* ---------- RESULT ---------- */
 
         .result-box {
             min-height: 45px;
@@ -875,7 +951,6 @@
             margin-bottom: 2px;
         }
 
-        /* ---------- WARNING RULES ---------- */
 
         .warning-rules {
             margin-top: 18px;
@@ -917,7 +992,6 @@
             color: var(--gold);
         }
 
-        /* ---------- WITHDRAWALS ---------- */
 
         .withdrawal-item {
             padding: 16px;
@@ -1008,7 +1082,6 @@
             opacity: .5;
         }
 
-        /* Chart Container */
         .chart-container {
             position: relative;
             height: 300px;
@@ -1019,7 +1092,6 @@
             border: 1px solid var(--border);
         }
 
-        /* ---------- ANIMATION ---------- */
 
         .admin-section,
         .stat-card {
@@ -1041,7 +1113,6 @@
             }
         }
 
-        /* ---------- RESPONSIVE ---------- */
 
         @media (max-width: 900px) {
             .admin-sections {
@@ -1125,6 +1196,11 @@
     <!-- Particles Background -->
     <div class="particles" id="particles"></div>
 
+    <!-- Lava Lamp Effect -->
+    <div class="lava-container">
+        <canvas id="bubble"></canvas>
+    </div>
+
     <div class="admin-layout">
         <!-- SIDEBAR -->
         <aside class="sidebar">
@@ -1139,25 +1215,47 @@
             </div>
 
             <nav class="nav-menu">
-                <div class="nav-item active" data-section="dashboard">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
+                <div class="animated-menu-item active" data-section="dashboard" style="--bgColorItem: #ff8c00;">
+                    <svg class="animated-menu-icon" viewBox="0 0 24 24">
+                        <path d="M3.8,6.6h16.4"/>
+                        <path d="M20.2,12.1H3.8"/>
+                        <path d="M3.8,17.5h16.4"/>
+                    </svg>
+                    <span style="margin-left: 12px; font-size: 14px; font-weight: 500;">Dashboard</span>
                 </div>
-                <div class="nav-item" data-section="users">
-                    <i data-lucide="users"></i>
-                    <span>Users</span>
+                <div class="animated-menu-item" data-section="users" style="--bgColorItem: #f54888;">
+                    <svg class="animated-menu-icon" viewBox="0 0 24 24">
+                        <path d="M6.7,4.8h10.7c0.3,0,0.6,0.2,0.7,0.5l2.8,7.3c0,0.1,0,0.2,0,0.3v5.6c0,0.4-0.4,0.8-0.8,0.8H3.8
+                        C3.4,19.3,3,19,3,18.5v-5.6c0-0.1,0-0.2,0.1-0.3L6,5.3C6.1,5,6.4,4.8,6.7,4.8z"/>
+                        <path d="M3.4,12.9H8l1.6,2.8h4.9l1.5-2.8h4.6"/>
+                    </svg>
+                    <span style="margin-left: 12px; font-size: 14px; font-weight: 500;">Users</span>
                 </div>
-                <div class="nav-item" data-section="withdrawals">
-                    <i data-lucide="wallet"></i>
-                    <span>Withdrawals</span>
+                <div class="animated-menu-item" data-section="withdrawals" style="--bgColorItem: #4343f5;">
+                    <svg class="animated-menu-icon" viewBox="0 0 24 24">
+                        <path d="M3.4,11.9l8.8,4.4l8.4-4.4"/>
+                        <path d="M3.4,16.2l8.8,4.5l8.4-4.5"/>
+                        <path d="M3.7,7.8l8.6-4.5l8,4.5l-8,4.3L3.7,7.8z"/>
+                    </svg>
+                    <span style="margin-left: 12px; font-size: 14px; font-weight: 500;">Withdrawals</span>
                 </div>
-                <div class="nav-item" data-section="warnings">
-                    <i data-lucide="alert-triangle"></i>
-                    <span>Warnings</span>
+                <div class="animated-menu-item" data-section="warnings" style="--bgColorItem: #e0b115;">
+                    <svg class="animated-menu-icon" viewBox="0 0 24 24">
+                        <path d="M5.1,3.9h13.9c0.6,0,1.2,0.5,1.2,1.2v13.9c0,0.6-0.5,1.2-1.2,1.2H5.1c-0.6,0-1.2-0.5-1.2-1.2V5.1
+                          C3.9,4.4,4.4,3.9,5.1,3.9z"/>
+                        <path d="M4.2,9.3h15.6"/>
+                        <path d="M9.1,9.5v10.3"/>
+                    </svg>
+                    <span style="margin-left: 12px; font-size: 14px; font-weight: 500;">Warnings</span>
                 </div>
-                <div class="nav-item" data-section="settings">
-                    <i data-lucide="settings"></i>
-                    <span>Settings</span>
+                <div class="animated-menu-item" data-section="settings" style="--bgColorItem: #65ddb7;">
+                    <svg class="animated-menu-icon" viewBox="0 0 24 24">
+                        <path d="M5.1,3.9h13.9c0.6,0,1.2,0.5,1.2,1.2v13.9c0,0.6-0.5,1.2-1.2,1.2H5.1c-0.6,0-1.2-0.5-1.2-1.2V5.1
+                          C3.9,4.4,4.4,3.9,5.1,3.9z"/>
+                        <path d="M5.5,20l9.9-9.9l4.7,4.7"/>
+                        <path d="M10.4,8.8c0,0.9-0.7,1.6-1.6,1.6c-0.9,0-1.6-0.7-1.6-1.6C7.3,8,8,7.3,8.9,7.3C9.7,7.3,10.4,8,10.4,8.8z"/>
+                    </svg>
+                    <span style="margin-left: 12px; font-size: 14px; font-weight: 500;">Settings</span>
                 </div>
             </nav>
         </aside>
@@ -1228,8 +1326,112 @@
         <!-- ADMIN SECTIONS -->
         <section class="admin-sections">
 
+            <!-- DASHBOARD SECTION -->
+            <div class="admin-section" id="section-dashboard">
+                <div class="hero">
+                    <div class="hero-left">
+                        <div class="eyebrow">Secure Administration</div>
+
+                        <h1>Admin Console</h1>
+
+                        <p class="hero-description">
+                            Manage users, rewards, warnings and withdrawals from a
+                            centralized control interface.
+                        </p>
+                    </div>
+
+                    <div class="admin-badge">
+                        👑 ADMINISTRATOR
+                    </div>
+                </div>
+
+                <!-- STATS -->
+                <section class="stats-grid">
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <span class="stat-live">● Live</span>
+                        </div>
+
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">
+                                <i data-lucide="activity"></i>
+                            </div>
+                            <span class="stat-live">● Live</span>
+                        </div>
+
+                        <div class="stat-value" id="activeSessions">0</div>
+                        <div class="stat-label">Completed Activity</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">
+                                <i data-lucide="wallet"></i>
+                            </div>
+                            <span class="stat-live">● Live</span>
+                        </div>
+
+                        <div class="stat-value" id="totalWithdrawals">0</div>
+                        <div class="stat-label">Total Withdrawals</div>
+                    </div>
+
+                </section>
+
+                <!-- SERVER STATISTICS -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i data-lucide="bar-chart-2"></i>
+                            </div>
+
+                            <div>
+                                <h2>Server Statistics</h2>
+                                <p>Performance metrics & analytics</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="serverUptime">0h</div>
+                            <div class="stat-label">Server Uptime</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-value" id="apiRequests">0</div>
+                            <div class="stat-label">API Requests</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-value" id="errorRate">0%</div>
+                            <div class="stat-label">Error Rate</div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+
+                    <button class="btn" onclick="loadStats()">
+                        ↻ Refresh Statistics
+                    </button>
+
+                </div>
+            </div>
+
             <!-- USER MANAGEMENT -->
-            <div class="admin-section">
+            <div class="admin-section" id="section-users" style="display: none;">
 
                 <div class="section-header">
                     <div class="section-title">
@@ -1333,8 +1535,37 @@
             </div>
 
 
+            <!-- WITHDRAWALS MANAGEMENT -->
+            <div class="admin-section" id="section-withdrawals" style="display: none;">
+
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i data-lucide="wallet"></i>
+                        </div>
+
+                        <div>
+                            <h2>Withdrawals Management</h2>
+                            <p>Review and process withdrawal requests</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="withdrawals-list" id="withdrawalsList">
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <p>No pending withdrawals</p>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="loadWithdrawals()">
+                    ↻ Refresh Withdrawals
+                </button>
+
+            </div>
+
             <!-- WARNING MANAGEMENT -->
-            <div class="admin-section">
+            <div class="admin-section" id="section-warnings" style="display: none;">
 
                 <div class="section-header">
                     <div class="section-title">
@@ -1397,85 +1628,6 @@
             </div>
 
 
-            <!-- WITHDRAWALS -->
-            <div class="admin-section">
-
-                <div class="section-header">
-
-                    <div class="section-title">
-                        <div class="section-icon">
-                            <i data-lucide="wallet"></i>
-                        </div>
-
-                        <div>
-                            <h2>Withdrawals</h2>
-                            <p>Review pending reward requests</p>
-                        </div>
-                    </div>
-
-                </div>
-
-                <button class="btn" onclick="loadWithdrawals()">
-                    ↻ Refresh Withdrawals
-                </button>
-
-                <div
-                    class="result-box"
-                    id="withdrawalsList"
-                    style="margin-top:15px;"
-                ></div>
-
-            </div>
-
-
-            <!-- SERVER -->
-            <div class="admin-section">
-
-                <div class="section-header">
-
-                    <div class="section-title">
-                        <div class="section-icon">
-                            <i data-lucide="bar-chart-2"></i>
-                        </div>
-
-                        <div>
-                            <h2>Server Statistics</h2>
-                            <p>System activity overview</p>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="stats-grid">
-
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalUsers2">0</div>
-                        <div class="stat-label">Users</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-value" id="activeSessions2">0</div>
-                        <div class="stat-label">Activity</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalWithdrawals2">0</div>
-                        <div class="stat-label">Withdrawals</div>
-                    </div>
-
-                </div>
-
-                <!-- Chart Container -->
-                <div class="chart-container">
-                    <canvas id="statsChart"></canvas>
-                </div>
-
-                <button class="btn" onclick="loadStats()">
-                    ↻ Refresh Statistics
-                </button>
-
-            </div>
-
         </section>
 
             </div>
@@ -1504,6 +1656,269 @@
     }
     
     createParticles();
+
+    // Lava Lamp Effect
+    ;(function() {
+        "use strict";
+
+        var lava0;
+        var ge1doot = {
+            screen: {
+                elem:     null,
+                callback: null,
+                ctx:      null,
+                width:    0,
+                height:   0,
+                left:     0,
+                top:      0,
+                init: function (id, callback, initRes) {
+                    this.elem = document.getElementById(id);
+                    this.callback = callback || null;
+                    if (this.elem.tagName == "CANVAS") this.ctx = this.elem.getContext("2d");
+                    window.addEventListener('resize', function () {
+                        this.resize();
+                    }.bind(this), false);
+                    this.elem.onselectstart = function () { return false; }
+                    this.elem.ondrag        = function () { return false; }
+                    initRes && this.resize();
+                    return this;
+                },
+                resize: function () {
+                    var o = this.elem;
+                    this.width  = o.offsetWidth;
+                    this.height = o.offsetHeight;
+                    for (this.left = 0, this.top = 0; o != null; o = o.offsetParent) {
+                        this.left += o.offsetLeft;
+                        this.top  += o.offsetTop;
+                    }
+                    if (this.ctx) {
+                        this.elem.width  = this.width;
+                        this.elem.height = this.height;
+                    }
+                    this.callback && this.callback();
+                }
+            }
+        }
+
+        // Point constructor
+        var Point = function(x, y) {
+            this.x = x;
+            this.y = y;
+            this.magnitude = x * x + y * y;
+            this.computed = 0;
+            this.force = 0;
+        };
+        Point.prototype.add = function(p) {
+            return new Point(this.x + p.x, this.y + p.y);
+        };
+
+        // Ball constructor
+        var Ball = function(parent) {
+            var min = .1;
+            var max = 1.5;
+            this.vel = new Point(
+                (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25), (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())
+            );
+            this.pos = new Point(
+                parent.width * 0.2 + Math.random() * parent.width * 0.6,
+                parent.height * 0.2 + Math.random() * parent.height * 0.6
+            );
+            this.size = (parent.wh / 15) + ( Math.random() * (max - min) + min ) * (parent.wh / 15);
+            this.width = parent.width;
+            this.height = parent.height;
+        };
+
+        // move balls
+        Ball.prototype.move = function() {
+
+            // bounce borders
+            if (this.pos.x >= this.width - this.size) {
+                if (this.vel.x > 0) this.vel.x = -this.vel.x;
+                this.pos.x = this.width - this.size;
+            } else if (this.pos.x <= this.size) {
+                if (this.vel.x < 0) this.vel.x = -this.vel.x;
+                this.pos.x = this.size;
+            }
+
+            if (this.pos.y >= this.height - this.size) {
+                if (this.vel.y > 0) this.vel.y = -this.vel.y;
+                this.pos.y = this.height - this.size;
+            } else if (this.pos.y <= this.size) {
+                if (this.vel.y < 0) this.vel.y = -this.vel.y;
+                this.pos.y = this.size;
+            }
+
+            // velocity
+            this.pos = this.pos.add(this.vel);
+
+        };
+
+        // lavalamp constructor
+        var LavaLamp = function(width, height, numBalls, c0, c1) {
+            this.step = 5;
+            this.width = width;
+            this.height = height;
+            this.wh = Math.min(width, height);
+            this.sx = Math.floor(this.width / this.step);
+            this.sy = Math.floor(this.height / this.step);
+            this.paint = false;
+            this.metaFill = createRadialGradient(width, height, width, c0, c1);
+            this.plx = [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0];
+            this.ply = [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1];
+            this.mscases = [0, 3, 0, 3, 1, 3, 0, 3, 2, 2, 0, 2, 1, 1, 0];
+            this.ix = [1, 0, -1, 0, 0, 1, 0, -1, -1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1];
+            this.grid = [];
+            this.balls = [];
+            this.iter = 0;
+            this.sign = 1;
+
+            // init grid
+            for (var i = 0; i < (this.sx + 2) * (this.sy + 2); i++) {
+                this.grid[i] = new Point(
+                    (i % (this.sx + 2)) * this.step, (Math.floor(i / (this.sx + 2))) * this.step
+                )
+            }
+
+            // create metaballs
+            for (var k = 0; k < numBalls; k++) {
+                this.balls[k] = new Ball(this);
+            }
+        };
+        // compute cell force
+        LavaLamp.prototype.computeForce = function(x, y, idx) {
+
+            var force;
+            var id = idx || x + y * (this.sx + 2);
+
+            if (x === 0 || y === 0 || x === this.sx || y === this.sy) {
+                force = 0.6 * this.sign;
+            } else {
+                force = 0;
+                var cell = this.grid[id];
+                var i = 0;
+                var ball;
+                while (ball = this.balls[i++]) {
+                    force += ball.size * ball.size / (-2 * cell.x * ball.pos.x - 2 * cell.y * ball.pos.y + ball.pos.magnitude + cell.magnitude);
+                }
+                force *= this.sign
+            }
+            this.grid[id].force = force;
+            return force;
+        };
+        // compute cell
+        LavaLamp.prototype.marchingSquares = function(next) {
+            var x = next[0];
+            var y = next[1];
+            var pdir = next[2];
+            var id = x + y * (this.sx + 2);
+            if (this.grid[id].computed === this.iter) {
+                return false;
+            }
+            var dir, mscase = 0;
+
+            // neighbors force
+            for (var i = 0; i < 4; i++) {
+                var idn = (x + this.ix[i + 12]) + (y + this.ix[i + 16]) * (this.sx + 2);
+                var force = this.grid[idn].force;
+                if ((force > 0 && this.sign < 0) || (force < 0 && this.sign > 0) || !force) {
+                    // compute force if not in buffer
+                    force = this.computeForce(
+                        x + this.ix[i + 12],
+                        y + this.ix[i + 16],
+                        idn
+                    );
+                }
+                if (Math.abs(force) > 1) mscase += Math.pow(2, i);
+            }
+            if (mscase === 15) {
+                // inside
+                return [x, y - 1, false];
+            } else {
+                // ambiguous cases
+                if (mscase === 5) dir = (pdir === 2) ? 3 : 1;
+                else if (mscase === 10) dir = (pdir === 3) ? 0 : 2;
+                else {
+                    // lookup
+                    dir = this.mscases[mscase];
+                    this.grid[id].computed = this.iter;
+                }
+                // draw line
+                var ix = this.step / (
+                    Math.abs(Math.abs(this.grid[(x + this.plx[4 * dir + 2]) + (y + this.ply[4 * dir + 2]) * (this.sx + 2)].force) - 1) /
+                    Math.abs(Math.abs(this.grid[(x + this.plx[4 * dir + 3]) + (y + this.ply[4 * dir + 3]) * (this.sx + 2)].force) - 1) + 1
+                );
+                ctx.lineTo(
+                    this.grid[(x + this.plx[4 * dir]) + (y + this.ply[4 * dir]) * (this.sx + 2)].x + this.ix[dir] * ix,
+                    this.grid[(x + this.plx[4 * dir + 1]) + (y + this.ply[4 * dir + 1]) * (this.sx + 2)].y + this.ix[dir + 4] * ix
+                );
+                this.paint = true;
+                // next
+                return [
+                    x + this.ix[dir + 4],
+                    y + this.ix[dir + 8],
+                    dir
+                ];
+            }
+        };
+
+        LavaLamp.prototype.renderMetaballs = function() {
+            var i = 0, ball;
+            while (ball = this.balls[i++]) ball.move();
+            // reset grid
+            this.iter++;
+            this.sign = -this.sign;
+            this.paint = false;
+            ctx.fillStyle = this.metaFill;
+            ctx.beginPath();
+            // compute metaballs
+            i = 0;
+            while (ball = this.balls[i++]) {
+                // first cell
+                var next = [
+                    Math.round(ball.pos.x / this.step),
+                    Math.round(ball.pos.y / this.step), false
+                ];
+                // marching squares
+                do {
+                    next = this.marchingSquares(next);
+                } while (next);
+                // fill and close path
+                if (this.paint) {
+                    ctx.fill();
+                    ctx.closePath();
+                    ctx.beginPath();
+                    this.paint = false;
+                }
+            }
+        };
+
+        // gradients
+        var createRadialGradient = function(w, h, r, c0, c1) {
+            var gradient = ctx.createRadialGradient(
+                w / 1, h / 1, 0,
+                w / 1, h / 1, r
+            );
+            gradient.addColorStop(0, c0);
+            gradient.addColorStop(1, c1);
+            return gradient;
+        };
+
+        // main loop
+        var run = function() {
+            requestAnimationFrame(run);
+            ctx.clearRect(0, 0, screen.width, screen.height);
+            lava0.renderMetaballs();
+        };
+        // canvas
+        var screen = ge1doot.screen.init("bubble", null, true),
+            ctx = screen.ctx;
+        screen.resize();
+        // create LavaLamps
+        lava0 = new LavaLamp(screen.width, screen.height, 6, "#FF9298", "#E4008E");
+
+        run();
+
+    })();
 
     // Initialize Chart.js
     function initChart() {
@@ -1570,13 +1985,23 @@
     }
 
     // Sidebar navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
+    document.querySelectorAll('.animated-menu-item').forEach(item => {
         item.addEventListener('click', function() {
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.animated-menu-item').forEach(i => i.classList.remove('active'));
             this.classList.add('active');
             
             const section = this.dataset.section;
-            // Add navigation logic here if needed
+            
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById('section-' + section);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
         });
     });
 
