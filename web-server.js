@@ -970,9 +970,9 @@ const API_RATE_LIMITS = {
 // Rate limiting for robux farm (anti-exploitation)
 const robuxFarmRateLimit = new Map();
 const ROBUX_FARM_LIMITS = {
-    cooldownMs: 15000, // 15 seconds cooldown
-    maxAdsPerHour: 999999, // No limit
-    maxAdsPerDay: 999999 // No limit
+    cooldownMs: 30000, // 30 seconds cooldown (increased from 15)
+    maxAdsPerHour: 120, // Max 120 ads per hour (2 per minute)
+    maxAdsPerDay: 1000 // Max 1000 ads per day
 };
 
 // Quest completion tracking (anti-exploitation)
@@ -2675,6 +2675,11 @@ const server = http.createServer(async (req, res) => {
                     if (adsDiff > 1) {
                         console.log(`[SUSPICIOUS] User ${session.userId} tried to increment ads by ${adsDiff} in one request`);
                         logSecurityEvent(getClientIP(req), 'ROBUX_FARM_EXPLOIT', `User ${session.userId} attempted ads increment of ${adsDiff}`);
+                        
+                        // Auto-warn for clear exploitation attempts
+                        if (adsDiff > 10) {
+                            await addUserWarning(session.userId, session.username, 'Robux farm exploitation attempt');
+                        }
                     }
                     
                     // Only allow increment of 1 ad per request (enforced by rate limit)
@@ -2685,6 +2690,11 @@ const server = http.createServer(async (req, res) => {
                     
                     if (adsDiff > 1) {
                         sendJson(res, { error: 'Invalid ads increment (rate limited to 1 per request)' }, 429);
+                        return;
+                    }
+                    
+                    if (adsDiff === 0) {
+                        sendJson(res, { error: 'No ads increment detected' }, 400);
                         return;
                     }
 
