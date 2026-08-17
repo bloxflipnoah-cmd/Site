@@ -119,15 +119,6 @@ function createSQLiteTables() {
     `);
 
     db.exec(`
-        CREATE TABLE IF NOT EXISTS casino_data (
-            userId TEXT PRIMARY KEY,
-            totalRobux REAL DEFAULT 0,
-            gamesPlayed INTEGER DEFAULT 0,
-            wins INTEGER DEFAULT 0
-        )
-    `);
-
-    db.exec(`
         CREATE TABLE IF NOT EXISTS withdrawals (
             id TEXT PRIMARY KEY,
             discordToken TEXT NOT NULL,
@@ -177,15 +168,6 @@ async function createPostgreSQLTables() {
                 "earnings" REAL DEFAULT 0,
                 "robuxEarned" REAL DEFAULT 0,
                 "lastUpdated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS casino_data (
-                "userId" TEXT PRIMARY KEY,
-                "totalRobux" REAL DEFAULT 0,
-                "gamesPlayed" INTEGER DEFAULT 0,
-                "wins" INTEGER DEFAULT 0
             )
         `);
 
@@ -529,117 +511,117 @@ function generateSimpleCaptcha() {
 }
 
 // =========================================================
-// CASINO DATA STORAGE (POSTGRESQL + SQLITE)
+// ROBUX FARM DATA STORAGE (POSTGRESQL + SQLITE)
 // =========================================================
 
-async function loadCasinoData(userId) {
-    console.log('loadCasinoData - usePostgreSQL:', usePostgreSQL, 'userId:', userId);
+async function loadRobuxFarmData(userId) {
+    console.log('loadRobuxFarmData - usePostgreSQL:', usePostgreSQL, 'userId:', userId);
 
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
             try {
                 const result = await client.query(
-                    'SELECT * FROM casino_data WHERE "userId" = $1',
+                    'SELECT * FROM robux_farm_data WHERE "userId" = $1',
                     [userId]
                 );
                 console.log('PostgreSQL query result rows:', result.rows.length);
                 if (result.rows.length > 0) {
                     const row = result.rows[0];
                     return {
-                        totalRobux: row.totalRobux || 0,
-                        gamesPlayed: row.gamesPlayed || 0,
-                        wins: row.wins || 0
+                        adsWatched: row.adsWatched || 0,
+                        earnings: row.earnings || 0,
+                        robuxEarned: row.robuxEarned || 0
                     };
                 }
             } finally {
                 client.release();
             }
         } catch (error) {
-            console.error('PostgreSQL load casino data error:', error);
+            console.error('PostgreSQL load robux farm data error:', error);
         }
     } else {
         try {
-            const stmt = db.prepare('SELECT * FROM casino_data WHERE userId = ?');
+            const stmt = db.prepare('SELECT * FROM robux_farm_data WHERE userId = ?');
             const data = stmt.get(userId);
 
             console.log('SQLite query result:', data ? 'found' : 'not found');
 
             if (data) {
                 return {
-                    totalRobux: data.totalRobux || 0,
-                    gamesPlayed: data.gamesPlayed || 0,
-                    wins: data.wins || 0
+                    adsWatched: data.adsWatched || 0,
+                    earnings: data.earnings || 0,
+                    robuxEarned: data.robuxEarned || 0
                 };
             }
         } catch (error) {
-            console.error('SQLite load casino data error:', error);
+            console.error('SQLite load robux farm data error:', error);
         }
     }
 
-    console.log('Returning default casino data (0, 0, 0)');
-    return { totalRobux: 0, gamesPlayed: 0, wins: 0 };
+    console.log('Returning default data (0, 0, 0)');
+    return { adsWatched: 0, earnings: 0, robuxEarned: 0 };
 }
 
-async function saveCasinoData(userId, data) {
-    console.log('saveCasinoData - usePostgreSQL:', usePostgreSQL, 'userId:', userId, 'data:', data);
+async function addUserWarning(userId, username = null, reason = null) {
+    const currentWarnings = await getUserWarnings(userId);
+    const newWarningCount = currentWarnings.warningCount + 1;
+    
+    console.log(`[WARNING] Adding warning to user ${userId}${username ? ` (${username})` : ''}. Reason: ${reason || 'Unknown'}. New count: ${newWarningCount}`);
+    
+    let banUntil = null;
+    let isPermanentlyBanned = 0;
+
+    if (newWarningCount === 1) {
+        // 24h ban
+        const banDate = new Date();
+        banDate.setHours(banDate.getHours() + 24);
+        banUntil = banDate.toISOString();
+    } else if (newWarningCount === 2) {
+        // 48h ban
+        const banDate = new Date();
+        banDate.setHours(banDate.getHours() + 48);
+        banUntil = banDate.toISOString();
+    } else if (newWarningCount >= 3) {
+        // Permanent ban
+        isPermanentlyBanned = 1;
+    }
 
     if (usePostgreSQL) {
         try {
             const client = await pgPool.connect();
             try {
-                await client.query(
-                    `INSERT INTO casino_data ("userId", totalRobux, gamesPlayed, wins)
-                     VALUES ($1, $2, $3, $4)
-                     ON CONFLICT ("userId") 
-                     DO UPDATE SET 
-                         totalRobux = $2,
-                         gamesPlayed = $3,
-                         wins = $4`,
-                    [userId, data.totalRobux, data.gamesPlayed, data.wins]
-                );
-                console.log('PostgreSQL casino data saved successfully');
+                await client.query(`
+                    INSERT INTO user_warnings ("userId", "warningCount", "banUntil", "isPermanentlyBanned", "lastWarningAt")
+                    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+                    ON CONFLICT ("userId") DO UPDATE SET
+                        "warningCount" = EXCLUDED."warningCount",
+                        "banUntil" = EXCLUDED."banUntil",
+                        "isPermanentlyBanned" = EXCLUDED."isPermanentlyBanned",
+                        "lastWarningAt" = EXCLUDED."lastWarningAt"
+                `, [userId, newWarningCount, banUntil, isPermanentlyBanned]);
             } finally {
                 client.release();
             }
         } catch (error) {
-            console.error('PostgreSQL save casino data error:', error);
+            console.error('PostgreSQL add user warning error:', error);
         }
     } else {
         try {
             const stmt = db.prepare(`
-                INSERT INTO casino_data (userId, totalRobux, gamesPlayed, wins)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO user_warnings (userId, warningCount, banUntil, isPermanentlyBanned, lastWarningAt)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(userId) DO UPDATE SET
-                    totalRobux = excluded.totalRobux,
-                    gamesPlayed = excluded.gamesPlayed,
-                    wins = excluded.wins
+                    warningCount = excluded.warningCount,
+                    banUntil = excluded.banUntil,
+                    isPermanentlyBanned = excluded.isPermanentlyBanned,
+                    lastWarningAt = excluded.lastWarningAt
             `);
-            stmt.run(userId, data.totalRobux, data.gamesPlayed, data.wins);
-            console.log('SQLite casino data saved successfully');
+            stmt.run(userId, newWarningCount, banUntil, isPermanentlyBanned);
         } catch (error) {
-            console.error('SQLite save casino data error:', error);
+            console.error('SQLite add user warning error:', error);
         }
     }
-}
-
-// Transfer robux farm data to casino data
-async function transferRobuxFarmToCasino(userId) {
-    console.log('transferRobuxFarmToCasino - userId:', userId);
-    
-    const robuxFarmData = await loadRobuxFarmData(userId);
-    
-    // Transfer robuxEarned to totalRobux in casino
-    const casinoData = {
-        totalRobux: robuxFarmData.robuxEarned,
-        gamesPlayed: 0,
-        wins: 0
-    };
-    
-    await saveCasinoData(userId, casinoData);
-    console.log('Transferred robux farm data to casino for user:', userId);
-    
-    return casinoData;
 }
 
 async function saveRobuxFarmData(userId, data) {
@@ -775,73 +757,6 @@ async function getUserWarnings(userId) {
     }
 
     return { warningCount: 0, banUntil: null, isPermanentlyBanned: false, lastWarningAt: null };
-}
-
-async function addUserWarning(userId, username = null, reason = null) {
-    const currentWarnings = await getUserWarnings(userId);
-    const newWarningCount = currentWarnings.warningCount + 1;
-    
-    console.log(`[WARNING] Adding warning to user ${userId}${username ? ` (${username})` : ''}. Reason: ${reason || 'Unknown'}. New count: ${newWarningCount}`);
-    
-    let banUntil = null;
-    let isPermanentlyBanned = 0;
-
-    if (newWarningCount === 1) {
-        // 24h ban
-        const banDate = new Date();
-        banDate.setHours(banDate.getHours() + 24);
-        banUntil = banDate.toISOString();
-    } else if (newWarningCount === 2) {
-        // 48h ban
-        const banDate = new Date();
-        banDate.setHours(banDate.getHours() + 48);
-        banUntil = banDate.toISOString();
-    } else if (newWarningCount >= 3) {
-        // Permanent ban
-        isPermanentlyBanned = 1;
-    }
-
-    if (usePostgreSQL) {
-        try {
-            const client = await pgPool.connect();
-            try {
-                await client.query(`
-                    INSERT INTO user_warnings ("userId", "warningCount", "banUntil", "isPermanentlyBanned", "lastWarningAt")
-                    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-                    ON CONFLICT ("userId") DO UPDATE SET
-                        "warningCount" = EXCLUDED."warningCount",
-                        "banUntil" = EXCLUDED."banUntil",
-                        "isPermanentlyBanned" = EXCLUDED."isPermanentlyBanned",
-                        "lastWarningAt" = EXCLUDED."lastWarningAt"
-                `, [userId, newWarningCount, banUntil, isPermanentlyBanned]);
-            } finally {
-                client.release();
-            }
-        } catch (error) {
-            console.error('PostgreSQL add user warning error:', error);
-        }
-    } else {
-        try {
-            const stmt = db.prepare(`
-                INSERT INTO user_warnings (userId, warningCount, banUntil, isPermanentlyBanned, lastWarningAt)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(userId) DO UPDATE SET
-                    warningCount = excluded.warningCount,
-                    banUntil = excluded.banUntil,
-                    isPermanentlyBanned = excluded.isPermanentlyBanned,
-                    lastWarningAt = excluded.lastWarningAt
-            `);
-            stmt.run(userId, newWarningCount, banUntil, isPermanentlyBanned);
-        } catch (error) {
-            console.error('SQLite add user warning error:', error);
-        }
-    }
-
-    return {
-        warningCount: newWarningCount,
-        banUntil,
-        isPermanentlyBanned: isPermanentlyBanned === 1
-    };
 }
 
 async function clearUserWarnings(userId) {
@@ -1608,8 +1523,8 @@ const server = http.createServer(async (req, res) => {
             // Get warning details for the ban page
             const warnings = await getUserWarnings(session.userId);
             
-            // Only block robux-farm page specifically
-            if (req.method === 'GET' && (pathname === '/robux-farm' || pathname === '/robux-farm.html')) {
+            // Block all pages for banned users
+            if (req.method === 'GET') {
                 res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
                 res.end(`
                     <!DOCTYPE html>
@@ -1898,7 +1813,7 @@ const server = http.createServer(async (req, res) => {
                 res.writeHead(
                     302,
                     {
-                        'Location': '/mode-selection'
+                        'Location': '/dashboard'
                     }
                 );
 
@@ -1922,144 +1837,6 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
-    // MODE SELECTION
-    // =====================================================
-
-    if (pathname === '/mode-selection') {
-
-        if (!session) {
-
-            res.writeHead(
-                302,
-                {
-                    'Location': '/login'
-                }
-            );
-
-            res.end();
-
-        } else {
-
-            sendFile(
-                res,
-                path.join(
-                    __dirname,
-                    'public',
-                    'mode-selection.html'
-                )
-            );
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // CASINO
-    // =====================================================
-
-    if (pathname === '/casino') {
-
-        if (!session) {
-
-            res.writeHead(
-                302,
-                {
-                    'Location': '/login'
-                }
-            );
-
-            res.end();
-
-        } else if (url.searchParams.get('from') === 'selection') {
-
-            // Transfer robux farm data to casino on first visit
-            await transferRobuxFarmToCasino(session.userId);
-
-            sendFile(
-                res,
-                path.join(
-                    __dirname,
-                    'public',
-                    'casino.html'
-                )
-            );
-
-        } else {
-
-            res.writeHead(
-                302,
-                {
-                    'Location': '/mode-selection'
-                }
-            );
-
-            res.end();
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // ADMIN PANEL
-    // =====================================================
-
-    if (
-        pathname === '/admin' ||
-        pathname === '/admin.html'
-    ) {
-
-        if (!session) {
-
-            res.writeHead(
-                302,
-                {
-                    'Location': '/login'
-                }
-            );
-
-            res.end();
-
-            return;
-        }
-
-        // Check if user is admin, if not add warning and redirect
-        const isAdmin = isAdminUser(session.userId, session.username);
-        if (!isAdmin) {
-            console.log(`[SECURITY] Unauthorized admin access attempt by user ${session.userId} (${session.username})`);
-            logSecurityEvent(getClientIP(req), 'UNAUTHORIZED_ADMIN_ACCESS', `User ${session.userId} (${session.username}) attempted to access admin panel`);
-            
-            // Add warning to user
-            await addUserWarning(session.userId, session.username, 'Unauthorized admin access attempt');
-            
-            // Redirect to mode-selection with error
-            res.writeHead(
-                302,
-                {
-                    'Location': '/mode-selection'
-                }
-            );
-
-            res.end();
-
-            return;
-        }
-
-        sendFile(
-            res,
-            path.join(
-                __dirname,
-                'public',
-                'admin.html'
-            )
-        );
-
-        return;
-    }
-
-
-    // =====================================================
     // DASHBOARD
     // =====================================================
 
@@ -2076,7 +1853,7 @@ const server = http.createServer(async (req, res) => {
 
             res.end();
 
-        } else if (url.searchParams.get('from') === 'selection') {
+        } else {
 
             sendFile(
                 res,
@@ -2086,17 +1863,6 @@ const server = http.createServer(async (req, res) => {
                     'dashboard.html'
                 )
             );
-
-        } else {
-
-            res.writeHead(
-                302,
-                {
-                    'Location': '/mode-selection'
-                }
-            );
-
-            res.end();
         }
 
         return;
@@ -2671,323 +2437,6 @@ const server = http.createServer(async (req, res) => {
 
 
     // =====================================================
-    // CASINO API - GET DATA
-    // =====================================================
-
-    if (
-        pathname === '/api/casino/data' &&
-        req.method === 'GET'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        try {
-            const userData = await loadCasinoData(session.userId);
-
-            sendJson(
-                res,
-                {
-                    success: true,
-                    totalRobux: userData.totalRobux,
-                    gamesPlayed: userData.gamesPlayed,
-                    wins: userData.wins
-                }
-            );
-
-        } catch (error) {
-            console.error('Get casino data error:', error);
-            sendJson(
-                res,
-                { error: 'Failed to load data' },
-                500
-            );
-        }
-
-        return;
-    }
-
-    // =====================================================
-    // CASINO API - SAVE DATA
-    // =====================================================
-
-    if (
-        pathname === '/api/casino/data' &&
-        req.method === 'POST'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        try {
-            let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', async () => {
-                try {
-                    const { totalRobux, gamesPlayed, wins } = JSON.parse(body);
-
-                    await saveCasinoData(session.userId, {
-                        totalRobux,
-                        gamesPlayed,
-                        wins
-                    });
-
-                    sendJson(
-                        res,
-                        { success: true }
-                    );
-
-                } catch (parseError) {
-                    console.error('Parse error:', parseError);
-                    sendJson(
-                        res,
-                        { error: 'Failed to save data' },
-                        500
-                    );
-                }
-            });
-
-        } catch (error) {
-            console.error('Save casino data error:', error);
-            sendJson(
-                res,
-                { error: 'Failed to save data' },
-                500
-            );
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // ROBUX FARM API - SAVE DATA
-    // =====================================================
-
-    if (
-        pathname === '/api/robux-farm/data' &&
-        req.method === 'POST'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        // Check if captcha is required
-        const captchaRequired = await checkCaptchaRequired(sessionId);
-        if (captchaRequired) {
-            const captcha = generateSimpleCaptcha();
-            sendJson(res, { 
-                error: 'Captcha required',
-                captchaRequired: true,
-                captchaQuestion: captcha.question
-            }, 403);
-            return;
-        }
-
-        try {
-            let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', async () => {
-                try {
-                    const { adsWatched, earnings, robuxEarned } = JSON.parse(body);
-
-                    // Get current data to validate increment
-                    const currentData = await loadRobuxFarmData(session.userId);
-                    
-                    // Validate adsWatched increment (anti-exploitation)
-                    const adsDiff = adsWatched - currentData.adsWatched;
-                    
-                    // Log suspicious activity
-                    if (adsDiff > 1) {
-                        console.log(`[SUSPICIOUS] User ${session.userId} tried to increment ads by ${adsDiff} in one request`);
-                        logSecurityEvent(getClientIP(req), 'ROBUX_FARM_EXPLOIT', `User ${session.userId} attempted ads increment of ${adsDiff}`);
-                        
-                        // Auto-warn for clear exploitation attempts
-                        if (adsDiff > 10) {
-                            await addUserWarning(session.userId, session.username, 'Robux farm exploitation attempt');
-                        }
-                    }
-                    
-                    // Only allow increment of 1 ad per request (enforced by rate limit)
-                    if (adsDiff < 0) {
-                        sendJson(res, { error: 'Invalid ads count (cannot decrease)' }, 400);
-                        return;
-                    }
-                    
-                    if (adsDiff > 1) {
-                        sendJson(res, { error: 'Invalid ads increment (rate limited to 1 per request)' }, 429);
-                        return;
-                    }
-                    
-                    if (adsDiff === 0) {
-                        sendJson(res, { error: 'No ads increment detected' }, 400);
-                        return;
-                    }
-
-                    // Check rate limit for robux farm
-                    const rateLimitCheck = checkRobuxFarmRateLimit(session.userId);
-                    if (!rateLimitCheck.allowed) {
-                        console.log(`[RATE_LIMIT] User ${session.userId} blocked: ${rateLimitCheck.reason}`);
-                        sendJson(res, { 
-                            error: rateLimitCheck.reason,
-                            retryAfter: rateLimitCheck.retryAfter
-                        }, 429);
-                        return;
-                    }
-
-                    // Record the ad
-                    if (adsDiff === 1) {
-                        recordRobuxFarmAd(session.userId);
-                    }
-
-                    await saveRobuxFarmData(session.userId, {
-                        adsWatched,
-                        earnings,
-                        robuxEarned
-                    });
-
-                    sendJson(
-                        res,
-                        { success: true }
-                    );
-
-                } catch (parseError) {
-                    console.error('Parse error:', parseError);
-                    sendJson(
-                        res,
-                        { error: 'Failed to save data' },
-                        500
-                    );
-                }
-            });
-
-        } catch (error) {
-            console.error('Save robux farm data error:', error);
-            sendJson(
-                res,
-                { error: 'Failed to save data' },
-                500
-            );
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // ADMIN API - MANAGE USER ROBUX FARM DATA
-    // =====================================================
-
-    if (
-        pathname === '/api/admin/robux-farm' &&
-        req.method === 'POST'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        // Check if user is admin
-        if (!isAdminUser(session.userId, session.username)) {
-            sendJson(
-                res,
-                { error: 'Forbidden - Admin only' },
-                403
-            );
-            return;
-        }
-
-        try {
-            let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', async () => {
-                try {
-                    const { targetUserId, action, adsWatched, earnings, robuxEarned } = JSON.parse(body);
-
-                    if (!targetUserId || !action) {
-                        sendJson(res, { error: 'Missing required fields: targetUserId, action' }, 400);
-                        return;
-                    }
-
-                    const currentData = await loadRobuxFarmData(targetUserId);
-
-                    let newData;
-                    if (action === 'add') {
-                        // Add robux to user
-                        const addAmount = robuxEarned || 0;
-                        newData = {
-                            adsWatched: currentData.adsWatched,
-                            earnings: currentData.earnings + (addAmount / ROBUX_PER_EURO),
-                            robuxEarned: currentData.robuxEarned + addAmount
-                        };
-                        console.log(`[ADMIN] User ${session.userId} added ${addAmount} robux to user ${targetUserId}`);
-                    } else if (action === 'set') {
-                        // Set specific values
-                        newData = {
-                            adsWatched: adsWatched !== undefined ? adsWatched : currentData.adsWatched,
-                            earnings: earnings !== undefined ? earnings : currentData.earnings,
-                            robuxEarned: robuxEarned !== undefined ? robuxEarned : currentData.robuxEarned
-                        };
-                        console.log(`[ADMIN] User ${session.userId} set data for user ${targetUserId}:`, newData);
-                    } else if (action === 'reset') {
-                        // Reset user data
-                        newData = {
-                            adsWatched: 0,
-                            earnings: 0,
-                            robuxEarned: 0
-                        };
-                        console.log(`[ADMIN] User ${session.userId} reset data for user ${targetUserId}`);
-                    } else {
-                        sendJson(res, { error: 'Invalid action. Must be: add, set, or reset' }, 400);
-                        return;
-                    }
-
-                    await saveRobuxFarmData(targetUserId, newData);
-
-                    sendJson(res, {
-                        success: true,
-                        previousData: currentData,
-                        newData
-                    });
-
-                } catch (error) {
-                    console.error('Admin robux farm action error:', error);
-                    sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
-                }
-            });
-        } catch (error) {
-            console.error('Admin robux farm request error:', error);
-            sendJson(res, { error: 'Failed to process request: ' + error.message }, 500);
-        }
-
-        return;
-    }
-
-
-    // =====================================================
     // ADMIN API - WARNING MANAGEMENT
     // =====================================================
 
@@ -3200,259 +2649,12 @@ const server = http.createServer(async (req, res) => {
 
         return;
     }
-
-
-    // =====================================================
-    // WITHDRAWAL API - GET WITHDRAWALS (ADMIN ONLY)
-    // =====================================================
-
-    if (
-        pathname === '/api/withdrawals' &&
-        req.method === 'GET'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        // Check if user is admin
-        if (!isAdminUser(session.userId, session.username)) {
-            sendJson(
-                res,
-                { error: 'Forbidden - Admin only' },
-                403
-            );
-            return;
-        }
-
-        try {
-            const withdrawals = getWithdrawals();
-            sendJson(
-                res,
-                { success: true, withdrawals }
-            );
-
-        } catch (error) {
-            console.error('Get withdrawals error:', error);
-            sendJson(
-                res,
-                { error: 'Failed to load withdrawals' },
-                500
-            );
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // WITHDRAWAL API - UPDATE STATUS (ADMIN ONLY)
-    // =====================================================
-
-    if (
-        pathname === '/api/withdrawals/status' &&
-        req.method === 'POST'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        // Check if user is admin
-        if (!isAdminUser(session.userId, session.username)) {
-            sendJson(
-                res,
-                { error: 'Forbidden - Admin only' },
-                403
-            );
-            return;
-        }
-
-        try {
-            let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', async () => {
-                try {
-                    const { withdrawalId, status } = JSON.parse(body);
-
-                    if (!withdrawalId || !status) {
-                        sendJson(
-                            res,
-                            { error: 'Missing required fields: withdrawalId, status' },
-                            400
-                        );
-                        return;
-                    }
-
-                    if (!['pending', 'approved', 'rejected'].includes(status)) {
-                        sendJson(
-                            res,
-                            { error: 'Invalid status. Must be: pending, approved, or rejected' },
-                            400
-                        );
-                        return;
-                    }
-
-                    updateWithdrawalStatus(withdrawalId, status);
-
-                    sendJson(
-                        res,
-                        { success: true }
-                    );
-
-                } catch (parseError) {
-                    console.error('Parse error:', parseError);
-                    sendJson(
-                        res,
-                        { error: 'Invalid request body' },
-                        400
-                    );
-                }
-            });
-
-        } catch (error) {
-            console.error('Update withdrawal status error:', error);
-            sendJson(
-                res,
-                { error: 'Failed to update withdrawal status' },
-                500
-            );
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // USER API - ADMIN STATUS CHECK
-    // =====================================================
-
-    if (
-        pathname === '/api/user/admin-status' &&
-        req.method === 'GET'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        const isAdmin = isAdminUser(session.userId, session.username);
-
-        sendJson(
-            res,
-            { isAdmin }
-        );
-
-        return;
-    }
-
-
-    // =====================================================
-    // CAPTCHA VERIFICATION
-    // =====================================================
-
-    if (
-        pathname === '/api/captcha/verify' &&
-        req.method === 'POST'
-    ) {
-
-        if (!session) {
-            sendJson(
-                res,
-                { error: 'Unauthorized' },
-                401
-            );
-            return;
-        }
-
-        try {
-            let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', async () => {
-                try {
-                    const { answer } = JSON.parse(body);
-                    
-                    // Generate the expected answer based on session (in production, store the captcha answer in session)
-                    // For now, we'll use a simple validation
-                    const captcha = generateSimpleCaptcha();
-                    
-                    if (answer === captcha.answer) {
-                        await updateCaptchaVerification(sessionId);
-                        sendJson(res, { success: true });
-                    } else {
-                        sendJson(res, { error: 'Invalid captcha answer' }, 400);
-                    }
-                } catch (error) {
-                    console.error('Captcha verification error:', error);
-                    sendJson(res, { error: 'Captcha verification failed' }, 500);
-                }
-            });
-        } catch (error) {
-            console.error('Captcha verification error:', error);
-            sendJson(res, { error: 'Captcha verification failed' }, 500);
-        }
-
-        return;
-    }
-
-
-    // =====================================================
-    // LOGOUT
-    // =====================================================
-
-    if (
-        pathname === '/logout' &&
-        req.method === 'POST'
-    ) {
-
-        if (sessionId) {
-            sessions.delete(sessionId);
-            await deleteSession(sessionId);
-        }
-
-        sendJson(
-            res,
-            {
-                success: true,
-                redirect: '/login'
-            }
-        );
-
-        return;
-    }
-
-
-    // =====================================================
-    // 404
-    // =====================================================
-
-    res.end(
-        '<h1>404 Not Found</h1>'
-    );
 });
 
-
-// =========================================================
-// START SERVER
-// =========================================================
-
 // Initialize database (async)
+console.log('Initializing database...');
 initDatabase().then(() => {
+    console.log('Database initialized, starting server...');
     server.listen(
         PORT,
         () => {
@@ -3463,5 +2665,4 @@ initDatabase().then(() => {
     );
 }).catch(error => {
     console.error('Failed to initialize database:', error);
-    process.exit(1);
 });

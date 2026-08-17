@@ -8,9 +8,6 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   
-  <!-- Monetag -->
-  <meta name="monetag" content="70ea34911f3c08572023593bade51743">
-  
   <style>
     /* =========================================================
        ORBISTRAL design system — deep-space console
@@ -64,99 +61,20 @@
     html,
     body {
       width: 100%;
-      min-height: 100vh;
-      background: var(--background);
+      margin: 0;
+      overflow: hidden;
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
       color: var(--foreground);
-      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* STARFIELD */
-    .starfield {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 72% 12%, oklch(0.5 0.2 275 / 0.28), transparent 42%),
-        radial-gradient(circle at 12% 78%, oklch(0.7 0.15 205 / 0.16), transparent 40%),
-        radial-gradient(circle at 50% 120%, oklch(0.7 0.18 330 / 0.12), transparent 45%),
-        linear-gradient(160deg, oklch(0.12 0.03 265), oklch(0.16 0.045 270) 45%, oklch(0.11 0.03 265));
-      animation: pulse-glow 8s ease-in-out infinite;
-    }
-
-    @keyframes pulse-glow {
-      0%, 100% {
-        opacity: 0.8;
-      }
-      50% {
-        opacity: 1;
-      }
-    }
-
-    /* Neon particles effect */
-    .particles {
+    #canv {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
       z-index: 0;
-      overflow: hidden;
-    }
-
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(255, 200, 50, 0.6);
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(255, 200, 50, 0.8);
-      animation: float 15s infinite;
-    }
-
-    @keyframes float {
-      0%, 100% {
-        transform: translateY(0) translateX(0);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-100vh) translateX(50px);
-        opacity: 0;
-      }
-    }
-
-    .star {
-      position: absolute;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle var(--dur, 3s) ease-in-out infinite;
-      animation-delay: var(--delay, 0s);
-      opacity: 0.4;
-      box-shadow: 0 0 4px rgba(255, 255, 255, 0.9), 0 0 8px rgba(100, 150, 255, 0.4);
-    }
-
-    @keyframes twinkle {
-      0%, 100% {
-        opacity: 0.2;
-        transform: scale(0.4);
-      }
-      30% {
-        opacity: 0.9;
-        transform: scale(1.1);
-      }
-      60% {
-        opacity: 0.3;
-        transform: scale(0.6);
-      }
     }
 
     /* MAIN CONTAINER */
@@ -1053,86 +971,12 @@
       }
     }
 
-    /* =========================================================
-       ADVERTISEMENT PLACEMENTS
-       ========================================================= */
-    .ad-container {
-      background: transparent;
-      border: none;
-      border-radius: 12px;
-      padding: 0;
-      margin: 20px 0;
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .ad-banner {
-      width: 728px;
-      height: 90px;
-      max-width: 100%;
-      margin: 0 auto;
-    }
-
-    .ad-square {
-      width: 300px;
-      height: 250px;
-      max-width: 100%;
-      margin: 0 auto;
-    }
-
-    .ad-skyscraper {
-      width: 160px;
-      height: 600px;
-    }
-
-    .ad-top {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: rgba(2, 3, 10, 0.95);
-      padding: 10px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .ad-sidebar {
-      position: fixed;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 999;
-    }
-
-    @media (max-width: 768px) {
-      .ad-sidebar {
-        display: none;
-      }
-      .ad-banner {
-        height: 50px;
-      }
-    }
   </style>
 </head>
 
 <body>
 
-  <!-- Particles Background -->
-  <div class="particles" id="particles"></div>
-
-  <!-- Fond étoilé -->
-  <div class="starfield"></div>
-
-  <!-- Publicité sidebar droite - temporarily disabled -->
-  <!--
-  <div class="ad-sidebar">
-    <div class="ad-container ad-skyscraper">
-      <script>(function(s){s.dataset.zone='11569592',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-    </div>
-  </div>
-  -->
+  <canvas id='canv'></canvas>
 
   <main class="dashboard">
 
@@ -1205,29 +1049,141 @@
     <!-- Bouton Send pour mobile -->
     <button id="sendBtn" class="send-btn">Submit</button>
 
+    <!-- Forgot Password Link -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="https://discord.gg/kDbevkbHvX" target="_blank" style="color: #7289da; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s ease;">
+        Forgot your password?
+      </a>
+    </div>
+
   </main>
 
   <script>
+    // Canvas Animation
+    var c = document.getElementById('canv');
+    var $ = c.getContext('2d');
+    var u = 0;
+
+    /*
+    Marsaglia's Xorshift128 PRG: http://en.wikipedia.org/wiki/Xorshift
+    */
+    var shift = function(x, y, z, w) {
+      x = x || 123456789;
+      y = y || 362436069;
+      z = z || 521288629;
+      w = w || 88675123;
+
+      return function() {
+        var s = x ^ (x << 11);
+        x = y;
+        y = z;
+        z = w;
+        w = (w ^ (w >>> 19)) ^ (s ^ (s >>> 8));
+        return w;
+      };
+    }
+
+    var go = function() {
+      var sc, g, g1, i, j, p, x, y, z, w, a, cur,
+        d = new Date() / 1000,
+        rnd = shift(),
+        rnd1 = d,
+        rnd2 = 2.4,
+        rnd3 = d * 0.2,
+        rnd1c = Math.cos(rnd1),
+        rnd1s = Math.sin(rnd1),
+        rnd2c = Math.cos(rnd2),
+        rnd2s = Math.sin(rnd2);
+
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+      sc = Math.max(c.width, c.height);
+      $.translate(c.width * 0.5, c.height * 0.5);
+      $.scale(sc, sc);
+
+      g = $.createLinearGradient(-1, -2, 1, 2);
+      g.addColorStop(0.0, 'hsla(' + u * 5 + ',90%,50%, 1)');
+      g.addColorStop(0.5, 'hsla(0,0%,0%,1)');
+      g.addColorStop(1.0, 'hsla(' + u + ',90%,50%, 1)');
+      $.fillStyle = g;
+      $.fillRect(-0.5, -0.5, 1, 1);
+
+      $.rotate(rnd3 % Math.PI * 2);
+      for (i = 0; i < 360; i += 1) {
+
+        p = rnd();
+        x = (p & 0xff) / 128 - 1;
+        y = (p >>> 8 & 0xff) / 128 - 1;
+        z = (p >>> 16 & 0xff) / 128 - 1;
+        w = (p >>> 24 & 0xff) / 256;
+
+        z += d * 0.5;
+        z = (z + 1) % 2 - 1;
+
+        a = (z + 1) * 0.5;
+        if (a < 0.9) {
+          $.globalAlpha = a / 0.9;
+        } else {
+          a -= 0.9;
+          $.globalAlpha = 1 - a / 0.1;
+        }
+
+        cur = x * rnd1c + y * rnd1s;
+        y = x * rnd1s - y * rnd1c;
+        x = cur;
+
+        cur = y * rnd2c + z * rnd2s;
+        z = y * rnd2s - z * rnd2c;
+        y = cur;
+
+        z -= 0.75;
+        if (z >= 0) {
+          continue;
+        }
+        sc = 0.15 / z;
+        x *= sc;
+        y *= sc;
+
+        $.save();
+        g1 = $.createRadialGradient(1, -2, 2, 1, 2, 2);
+        g1.addColorStop(0.0, 'hsla(' + u * 5 + ',95%,50%, .8)');
+        g1.addColorStop(0.5, 'hsla(' + u * 5 + ',95%,50%, .4)');
+        g1.addColorStop(1.0, 'hsla(' + u + ',95%,50%, .8)');
+        $.fillStyle = g1;
+        $.translate(x, y);
+        $.scale(sc * 0.02, sc * 0.02);
+        $.rotate(w * Math.PI * 2);
+        $.beginPath();
+        $.arc(2, 0, 1.2, 0, Math.PI * 2);
+        $.rotate(Math.PI * 2 * 0.1);
+        $.closePath();
+        $.fill();
+        $.restore();
+      }
+    };
+    window.addEventListener('resize', function() {
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+    }, false);
+    window.requestAnimFrame = (function() {
+      return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function(callback) {
+          window.setTimeout(callback, 1000 / 60);
+        };
+    })();
+    var run = function() {
+      window.requestAnimFrame(run);
+      go();
+      u -= .2;
+    }
+    run();
+
     // Initialize Lucide icons
     lucide.createIcons();
-
-    // Generate particles
-    function createParticles() {
-      const particlesContainer = document.getElementById('particles');
-      const particleCount = 50;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.top = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 15 + 's';
-        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-        particlesContainer.appendChild(particle);
-      }
-    }
-    
-    createParticles();
 
     // Protection contre le vol de code
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -1243,20 +1199,6 @@
     // Désactiver la sélection de texte
     document.addEventListener('selectstart', e => e.preventDefault());
     document.addEventListener('dragstart', e => e.preventDefault());
-
-    // Générer beaucoup plus d'étoiles de fond
-    const starfield = document.querySelector('.starfield');
-    for (let i = 0; i < 300; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = Math.random() * 100 + '%';
-      star.style.top = Math.random() * 100 + '%';
-      star.style.setProperty('--dur', (Math.random() * 4 + 2) + 's');
-      star.style.setProperty('--delay', Math.random() * 6 + 's');
-      star.style.width = (Math.random() * 2 + 1) + 'px';
-      star.style.height = star.style.width;
-      starfield.appendChild(star);
-    }
 
     // Login direct dans l'orbe
     const tokenInput = document.getElementById('tokenInput');
